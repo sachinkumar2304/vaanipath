@@ -21,9 +21,12 @@ def transcribe(
     logger.info(f"STT mode={mode}, model={model_size}, compute={compute_type}")
     model = WhisperModel(model_size, device="cpu", compute_type=compute_type)
 
+    # Strip region code (e.g., 'en-IN' -> 'en') for Whisper compatibility
+    base_lang = source_lang.split('-')[0]
+
     segments_iter, info = model.transcribe(
         audio_path,
-        language=source_lang,
+        language=base_lang,
         vad_filter=cfg.get("vad_filter", False),
         initial_prompt=initial_prompt or None,
         beam_size=1,
