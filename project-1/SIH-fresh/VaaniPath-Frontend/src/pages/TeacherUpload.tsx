@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { INDIAN_LANGUAGES } from '@/constants/languages';
 
 const TeacherUpload = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { isTeacher } = useAuth();
   const navigate = useNavigate();
@@ -186,24 +188,24 @@ const TeacherUpload = () => {
           onClick={() => navigate(courseIdParam ? `/teacher/course/${courseIdParam}` : '/teacher/courses')}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to {courseIdParam ? 'Course' : 'Courses'}
+          {courseIdParam ? t('teacherUpload.backToCourse') : t('teacherUpload.backToCourses')}
         </Button>
 
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            Upload Content
+            {t('teacherUpload.title')}
           </h1>
           <p className="text-muted-foreground">
-            Add a new video to your course
+            {t('teacherUpload.subtitle')}
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto">
           <Card className="glass-card border-white/20 dark:border-white/10 shadow-xl">
             <CardHeader>
-              <CardTitle>Content Details</CardTitle>
+              <CardTitle>{t('teacherUpload.contentDetails')}</CardTitle>
               <CardDescription>
-                Fill in the details and upload your educational content
+                {t('teacherUpload.fillDetails')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -211,14 +213,14 @@ const TeacherUpload = () => {
 
                 {/* Course Selection */}
                 <div className="space-y-2">
-                  <Label htmlFor="course">Course *</Label>
+                  <Label htmlFor="course">{t('teacherUpload.course')} *</Label>
                   <Select
                     value={selectedCourseId}
                     onValueChange={setSelectedCourseId}
                     disabled={!!courseIdParam || isUploading}
                   >
                     <SelectTrigger id="course">
-                      <SelectValue placeholder="Select a course" />
+                      <SelectValue placeholder={t('teacherUpload.selectCourse')} />
                     </SelectTrigger>
                     <SelectContent>
                       {courses.map((course) => (
@@ -230,7 +232,7 @@ const TeacherUpload = () => {
                   </Select>
                   {!courses.length && (
                     <p className="text-xs text-destructive">
-                      No courses found. <span className="underline cursor-pointer" onClick={() => navigate('/teacher/create-course')}>Create a course first</span>.
+                      {t('teacherUpload.noCourses')}
                     </p>
                   )}
                 </div>
@@ -246,7 +248,7 @@ const TeacherUpload = () => {
                       }`}
                   >
                     <Video className="h-6 w-6" />
-                    <span className="text-sm font-medium">Video</span>
+                    <span className="text-sm font-medium">{t('teacherUpload.video')}</span>
                   </button>
                   <button
                     type="button"
@@ -257,7 +259,7 @@ const TeacherUpload = () => {
                       }`}
                   >
                     <FileAudio className="h-6 w-6" />
-                    <span className="text-sm font-medium">Audio</span>
+                    <span className="text-sm font-medium">{t('teacherUpload.audio')}</span>
                   </button>
                   <button
                     type="button"
@@ -268,15 +270,15 @@ const TeacherUpload = () => {
                       }`}
                   >
                     <FileText className="h-6 w-6" />
-                    <span className="text-sm font-medium">Document</span>
+                    <span className="text-sm font-medium">{t('teacherUpload.document')}</span>
                   </button>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
+                  <Label htmlFor="title">{t('teacherUpload.contentTitle')} *</Label>
                   <Input
                     id="title"
-                    placeholder={`Enter ${contentType} title`}
+                    placeholder={t('teacherUpload.enterTitle')}
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
@@ -285,10 +287,10 @@ const TeacherUpload = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t('teacherUpload.description')}</Label>
                   <Textarea
                     id="description"
-                    placeholder={`Describe the ${contentType} content`}
+                    placeholder={t('teacherUpload.describeContent')}
                     rows={4}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -303,14 +305,14 @@ const TeacherUpload = () => {
                     <Input value={formData.domain} readOnly />
                   </div>
                   <div className="space-y-2">
-                    <Label>Source Language</Label>
+                    <Label>{t('teacherUpload.sourceLanguage')}</Label>
                     <Select
                       value={formData.source_language}
                       onValueChange={(value) => setFormData({ ...formData, source_language: value })}
                       disabled={isUploading}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select language" />
+                        <SelectValue placeholder={t('common.selectLanguage')} />
                       </SelectTrigger>
                       <SelectContent>
                         {INDIAN_LANGUAGES.map((lang) => (
@@ -324,7 +326,7 @@ const TeacherUpload = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="file">Upload {contentType === 'video' ? 'Video' : contentType === 'audio' ? 'Audio' : 'Document'} File *</Label>
+                  <Label htmlFor="file">{t('teacherUpload.uploadFile')} *</Label>
                   <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-smooth">
                     {contentType === 'video' && <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />}
                     {contentType === 'audio' && <FileAudio className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />}
@@ -349,13 +351,13 @@ const TeacherUpload = () => {
                         </div>
                       ) : (
                         <>
-                          <span className="text-primary font-medium">Click to upload</span>
-                          <span className="text-muted-foreground"> or drag and drop</span>
+                          <span className="text-primary font-medium">{t('teacherUpload.clickToUpload')}</span>
+                          <span className="text-muted-foreground"> {t('teacherUpload.dragDrop')}</span>
                         </>
                       )}
                     </Label>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Accepted: {getAcceptedFileTypes().replace(/\./g, '').toUpperCase().replace(/,/g, ', ')} (Max 500MB)
+                      Accepted: {getAcceptedFileTypes().replace(/\./g, '').toUpperCase().replace(/,/g, ', ')} ({t('teacherUpload.maxSize')})
                     </p>
                   </div>
                 </div>
@@ -363,14 +365,14 @@ const TeacherUpload = () => {
                 {isUploading && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Uploading...</span>
+                      <span>{t('teacherUpload.uploading')}</span>
                       <span className="font-medium">{uploadProgress}%</span>
                     </div>
                     <Progress value={uploadProgress} className="w-full" />
                     {uploadProgress === 100 && (
                       <div className="flex items-center gap-2 text-sm text-green-600">
                         <CheckCircle className="h-4 w-4" />
-                        <span>Upload complete! Processing...</span>
+                        <span>{t('teacherUpload.uploadComplete')}</span>
                       </div>
                     )}
                   </div>
@@ -385,12 +387,12 @@ const TeacherUpload = () => {
                   {isUploading ? (
                     <>
                       <Upload className="mr-2 h-4 w-4 animate-pulse" />
-                      Uploading... {uploadProgress}%
+                      {t('teacherUpload.uploading')} {uploadProgress}%
                     </>
                   ) : (
                     <>
                       <Upload className="mr-2 h-4 w-4" />
-                      Upload {contentType === 'video' ? 'Video' : contentType === 'audio' ? 'Audio' : 'Document'}
+                      {t('teacherUpload.upload')}
                     </>
                   )}
                 </Button>

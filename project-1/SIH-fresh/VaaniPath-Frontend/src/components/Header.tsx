@@ -2,7 +2,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { GraduationCap, Menu, X, LogOut, Trophy, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +26,7 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -42,32 +45,32 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
   const getNavLinks = () => {
     if (!isAuthenticated) {
       return [
-        { path: '/landingpage', label: 'Home' },
-        { path: '/login', label: 'Student Login' },
-        { path: '/teacherlogin', label: 'Teacher Login' },
+        { path: '/landingpage', label: t('common.home') },
+        { path: '/login', label: t('common.studentLogin') },
+        { path: '/teacherlogin', label: t('common.teacherLogin') },
       ];
     }
 
     if (userType === 'student') {
       return [
-        { path: '/homepage', label: 'Browse Courses' },
-        { path: '/enrolled', label: 'My Courses' },
-        { path: '/doubts', label: 'Ask Doubts' },
-        { path: '/community', label: 'Community' },
-        { path: '/rewards', label: 'Rewards' },
-        { path: '/roadmap', label: 'AI Roadmap' },
-        { path: '/podcast', label: 'Podcast' },
-        { path: '/feedback', label: 'Feedback' },
+        { path: '/homepage', label: t('common.browseCourses') },
+        { path: '/enrolled', label: t('common.myCourses') },
+        { path: '/doubts', label: t('common.askDoubts') },
+        { path: '/community', label: t('common.community') },
+        { path: '/rewards', label: t('common.rewards') },
+        { path: '/roadmap', label: t('common.aiRoadmap') },
+        { path: '/podcast', label: t('common.podcast') },
+        { path: '/feedback', label: t('common.feedback') },
       ];
     }
 
     if (userType === 'teacher') {
       return [
-        { path: '/teacher/dashboard', label: 'Dashboard' },
-        { path: '/teacher/courses', label: 'My Courses' },
-        { path: '/teacher/upload', label: 'Upload Content' },
-        { path: '/teacher/quizzes', label: 'Create Quiz' },
-        { path: '/teacher/doubts', label: 'Student Doubts' },
+        { path: '/teacher/dashboard', label: t('common.dashboard') },
+        { path: '/teacher/courses', label: t('common.myCourses') },
+        { path: '/teacher/upload', label: t('common.uploadContent') },
+        { path: '/teacher/quizzes', label: t('common.createQuiz') },
+        { path: '/teacher/doubts', label: t('common.studentDoubts') },
       ];
     }
 
@@ -85,10 +88,11 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
             <GraduationCap className="h-6 w-6 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            VAANIपथ
+            {t('header.title')}
           </span>
         </Link>
 
+        {/* Desktop Navigation */}
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
@@ -105,6 +109,10 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
 
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
+          <div className="hidden md:block">
+            <LanguageSwitcher />
+          </div>
+
           {isAuthenticated && userType === 'student' && (
             <Link to="/rewards" className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-primary text-primary-foreground hover:opacity-90 transition-opacity">
               <Trophy className="h-4 w-4" />
@@ -138,16 +146,16 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>{t('common.profile')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t('common.settings')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>{t('common.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -171,6 +179,9 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background">
           <nav className="container px-4 py-4 space-y-2">
+            <div className="px-4 py-2 mb-2">
+              <LanguageSwitcher />
+            </div>
             {isAuthenticated && (
               <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-muted/50 rounded-lg">
                 <Avatar className="h-10 w-10 border border-border">
@@ -205,7 +216,7 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
                 className="w-full text-left px-4 py-2 rounded-lg text-sm font-medium hover:bg-muted flex items-center space-x-2 text-destructive"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                <span>{t('common.logout')}</span>
               </button>
             )}
           </nav>

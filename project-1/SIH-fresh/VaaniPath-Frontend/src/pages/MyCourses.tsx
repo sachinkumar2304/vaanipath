@@ -11,8 +11,10 @@ import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { getMyEnrollments, Enrollment } from '@/services/enrollments';
 import { BookOpen, Play, Video, CheckCircle2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const MyCourses = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { toast } = useToast();
     const { user } = useAuth();
@@ -64,10 +66,10 @@ const MyCourses = () => {
                         </div>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold mb-3 text-foreground font-heading tracking-tight">
-                        My Courses
+                        {t('myCourses.title')}
                     </h1>
                     <p className="text-lg text-muted-foreground">
-                        Continue your learning journey
+                        {t('myCourses.subtitle')}
                     </p>
                 </motion.div>
 
@@ -75,7 +77,7 @@ const MyCourses = () => {
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <BookOpen className="h-16 w-16 text-primary mb-4 animate-pulse" />
-                        <p className="text-muted-foreground">Loading your courses...</p>
+                        <p className="text-muted-foreground">{t('myCourses.loading')}</p>
                     </div>
                 ) : enrollments.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,7 +108,7 @@ const MyCourses = () => {
 
                                     <CardHeader className="flex-grow">
                                         <CardTitle className="line-clamp-2 text-lg">
-                                            {enrollment.course_title || 'Untitled Course'}
+                                            {enrollment.course_title || t('myCourses.untitled')}
                                         </CardTitle>
                                     </CardHeader>
 
@@ -115,18 +117,18 @@ const MyCourses = () => {
                                         <div className="grid grid-cols-2 gap-3 p-3 bg-muted/30 rounded-lg text-sm">
                                             <div className="flex items-center gap-2">
                                                 <Video className="h-4 w-4 text-muted-foreground" />
-                                                <span>{enrollment.total_videos || 0} videos</span>
+                                                <span>{enrollment.total_videos || 0} {t('myCourses.videos')}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                                <span>{enrollment.completed_videos || 0} done</span>
+                                                <span>{enrollment.completed_videos || 0} {t('myCourses.done')}</span>
                                             </div>
                                         </div>
 
                                         {/* Progress Bar */}
                                         <div className="space-y-2">
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Progress</span>
+                                                <span className="text-muted-foreground">{t('myCourses.progress')}</span>
                                                 <span className="font-medium">
                                                     {Math.round(enrollment.progress_percentage || 0)}%
                                                 </span>
@@ -141,7 +143,7 @@ const MyCourses = () => {
                                         >
                                             <Link to={`/course-player/${enrollment.course_id}`}>
                                                 <Play className="mr-2 h-4 w-4" />
-                                                Continue Learning
+                                                {t('myCourses.continue')}
                                             </Link>
                                         </Button>
                                     </CardContent>
@@ -157,14 +159,14 @@ const MyCourses = () => {
                     >
                         <div className="glass-card border-white/20 dark:border-white/10 p-12 rounded-2xl shadow-xl max-w-md mx-auto">
                             <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-6 opacity-50" />
-                            <h3 className="text-xl font-bold text-foreground mb-2">No courses yet</h3>
+                            <h3 className="text-xl font-bold text-foreground mb-2">{t('myCourses.noCourses')}</h3>
                             <p className="text-muted-foreground mb-6">
-                                Enroll in courses to start your learning journey
+                                {t('myCourses.enrollPrompt')}
                             </p>
                             <Button asChild>
                                 <Link to="/browse-courses">
                                     <BookOpen className="mr-2 h-4 w-4" />
-                                    Browse Courses
+                                    {t('myCourses.browse')}
                                 </Link>
                             </Button>
                         </div>

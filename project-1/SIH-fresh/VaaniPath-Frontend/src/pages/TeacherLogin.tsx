@@ -10,8 +10,10 @@ import { BookOpen, ArrowLeft, Loader2, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const TeacherLogin = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login } = useAuth();
@@ -82,8 +84,8 @@ const TeacherLogin = () => {
             >
               <BookOpen className="h-10 w-10 text-secondary-foreground" />
             </motion.div>
-            <h1 className="text-4xl font-bold mb-3 text-foreground font-heading tracking-tight">Teacher Portal</h1>
-            <p className="text-lg text-muted-foreground">Manage your courses and inspire students</p>
+            <h1 className="text-4xl font-bold mb-3 text-foreground font-heading tracking-tight">{t('auth.teacherPortal')}</h1>
+            <p className="text-lg text-muted-foreground">{t('auth.teacherSubtitle')}</p>
           </div>
 
           <Card className="glass-card border-white/20 dark:border-white/10 shadow-2xl overflow-hidden relative group">
@@ -92,13 +94,13 @@ const TeacherLogin = () => {
 
             <form onSubmit={handleLogin} className="p-8 space-y-6">
               <div className="space-y-2 text-center mb-6">
-                <h2 className="text-2xl font-bold text-foreground">Educator Login</h2>
-                <p className="text-sm text-muted-foreground">Please enter your credentials</p>
+                <h2 className="text-2xl font-bold text-foreground">{t('auth.educatorLogin')}</h2>
+                <p className="text-sm text-muted-foreground">{t('auth.enterCredentials')}</p>
               </div>
 
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground/80">Email Address</Label>
+                  <Label htmlFor="email" className="text-foreground/80">{t('auth.emailAddress')}</Label>
                   <div className="relative">
                     <Input
                       id="email"
@@ -113,8 +115,8 @@ const TeacherLogin = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-foreground/80">Password</Label>
-                    <a href="#" className="text-xs text-secondary-foreground hover:underline">Forgot password?</a>
+                    <Label htmlFor="password" className="text-foreground/80">{t('auth.password')}</Label>
+                    <a href="#" className="text-xs text-secondary-foreground hover:underline">{t('auth.forgotPassword')}</a>
                   </div>
                   <div className="relative">
                     <Input
@@ -138,11 +140,11 @@ const TeacherLogin = () => {
                   {isLoggingIn ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Verifying...
+                      {t('auth.verifying')}
                     </>
                   ) : (
                     <>
-                      Login to Dashboard
+                      {t('auth.loginToDashboard')}
                       <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
                     </>
                   )}
@@ -152,10 +154,9 @@ const TeacherLogin = () => {
               <div className="text-xs text-center text-muted-foreground bg-secondary/5 p-4 rounded-lg border border-secondary/10 mt-6">
                 <div className="flex items-center justify-center gap-2 mb-1 text-secondary-foreground">
                   <Lock className="h-3 w-3" />
-                  <span className="font-semibold">Secure Access</span>
+                  <span className="font-semibold">{t('auth.secureAccess')}</span>
                 </div>
-                Teacher accounts are administratively managed. <br />
-                Contact support for access issues.
+                {t('auth.teacherAccessNote')}
               </div>
             </form>
           </Card>
@@ -163,7 +164,7 @@ const TeacherLogin = () => {
           <div className="mt-8 text-center">
             <Link to="/landingpage" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 group">
               <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Back to Home
+              {t('auth.backToHome')}
             </Link>
           </div>
         </motion.div>

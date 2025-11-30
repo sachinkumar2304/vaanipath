@@ -14,8 +14,10 @@ import { getMyCourses, Course, getTeacherStats } from '@/services/courses';
 import { useToast } from '@/hooks/use-toast';
 import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const TeacherDashboard = () => {
+  const { t } = useTranslation();
   const { isTeacher, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -61,8 +63,8 @@ const TeacherDashboard = () => {
 
   const quickActions = [
     {
-      title: 'Create Course',
-      description: 'Start a new course',
+      title: t('teacherDashboard.createCourse'),
+      description: t('teacherDashboard.createCourseDesc'),
       icon: Plus,
       link: '/teacher/create-course',
       color: 'from-blue-500 to-blue-600',
@@ -70,8 +72,8 @@ const TeacherDashboard = () => {
       hoverColor: 'hover:bg-blue-500/20'
     },
     {
-      title: 'My Courses',
-      description: 'Manage your content',
+      title: t('teacherDashboard.myCourses'),
+      description: t('teacherDashboard.manageContent'),
       icon: BookOpen,
       link: '/teacher/courses',
       color: 'from-purple-500 to-purple-600',
@@ -79,8 +81,8 @@ const TeacherDashboard = () => {
       hoverColor: 'hover:bg-purple-500/20'
     },
     {
-      title: 'Analytics',
-      description: 'View performance',
+      title: t('teacherDashboard.analytics'),
+      description: t('teacherDashboard.viewPerformance'),
       icon: BarChart3,
       link: '/teacher/analytics',
       color: 'from-teal-500 to-teal-600',
@@ -88,8 +90,8 @@ const TeacherDashboard = () => {
       hoverColor: 'hover:bg-teal-500/20'
     },
     {
-      title: 'Student Doubts',
-      description: 'Answer questions',
+      title: t('teacherDashboard.studentDoubts'),
+      description: t('teacherDashboard.answerQuestions'),
       icon: MessageSquare,
       link: '/teacher/doubts',
       color: 'from-orange-500 to-orange-600',
@@ -117,10 +119,10 @@ const TeacherDashboard = () => {
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-3 text-foreground font-heading tracking-tight">
-            Welcome, {user?.full_name?.split(' ')[0] || 'Teacher'}!
+            {t('teacherDashboard.welcomeTeacher')}, {user?.full_name?.split(' ')[0] || 'Teacher'}!
           </h1>
           <p className="text-lg text-muted-foreground">
-            Manage your courses and inspire students across India
+            {t('teacherDashboard.subtitle')}
           </p>
         </motion.div>
 
@@ -158,7 +160,7 @@ const TeacherDashboard = () => {
           <Card className="glass-card border-white/20 dark:border-white/10 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Videos
+                {t('teacherDashboard.totalVideos')}
               </CardTitle>
               <div className="p-2 rounded-lg bg-blue-500/10">
                 <Video className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -178,7 +180,7 @@ const TeacherDashboard = () => {
           <Card className="glass-card border-white/20 dark:border-white/10 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Students Enrolled
+                {t('teacherDashboard.totalStudents')}
               </CardTitle>
               <div className="p-2 rounded-lg bg-purple-500/10">
                 <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -198,7 +200,7 @@ const TeacherDashboard = () => {
           <Card className="glass-card border-white/20 dark:border-white/10 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Views
+                {t('teacherDashboard.totalViews')}
               </CardTitle>
               <div className="p-2 rounded-lg bg-teal-500/10">
                 <Eye className="h-4 w-4 text-teal-600 dark:text-teal-400" />
@@ -224,14 +226,14 @@ const TeacherDashboard = () => {
         >
           <Card className="glass-card border-white/20 dark:border-white/10 shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-xl font-bold text-foreground">Recent Courses</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground">{t('teacherDashboard.recentCourses')}</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/teacher/courses">View All</Link>
+                <Link to="/teacher/courses">{t('teacherDashboard.viewAll')}</Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading courses...</div>
+                <div className="text-center py-8 text-muted-foreground">{t('browseCourses.loading')}</div>
               ) : courses.length > 0 ? (
                 courses.slice(0, 3).map((course) => (
                   <div
@@ -287,14 +289,14 @@ const TeacherDashboard = () => {
                   <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
                     <Video className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-bold text-foreground mb-2">No courses yet</h3>
+                  <h3 className="text-lg font-bold text-foreground mb-2">{t('teacherDashboard.noCourses')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Create your first course to start teaching
+                    {t('teacherDashboard.createFirst')}
                   </p>
                   <Button asChild>
                     <Link to="/teacher/create-course">
                       <Plus className="mr-2 h-4 w-4" />
-                      Create Course
+                      {t('teacherDashboard.createCourse')}
                     </Link>
                   </Button>
                 </div>

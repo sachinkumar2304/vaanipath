@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getTeacherDoubts, answerDoubt, Doubt } from '@/services/doubts';
 
 const TeacherDoubts = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [selectedDoubt, setSelectedDoubt] = useState<Doubt | null>(null);
@@ -30,7 +32,7 @@ const TeacherDoubts = () => {
     } catch (error) {
       console.error('Failed to load doubts:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to load student doubts",
         variant: "destructive",
       });
@@ -56,7 +58,7 @@ const TeacherDoubts = () => {
       await answerDoubt(selectedDoubt.id, answer);
 
       toast({
-        title: "Answer Submitted",
+        title: t('common.success'),
         description: "Your answer has been sent to the student.",
       });
 
@@ -66,7 +68,7 @@ const TeacherDoubts = () => {
     } catch (error) {
       console.error('Failed to submit answer:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to submit answer",
         variant: "destructive",
       });
@@ -83,10 +85,10 @@ const TeacherDoubts = () => {
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-2">
             <MessageCircle className="h-8 w-8 text-primary" />
-            Student Doubts
+            {t('teacherDoubts.title')}
           </h1>
           <p className="text-muted-foreground">
-            Answer student questions and help them learn better
+            {t('teacherDoubts.subtitle')}
           </p>
         </div>
 
@@ -95,7 +97,7 @@ const TeacherDoubts = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Doubts
+                {t('teacherDoubts.totalDoubts')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -106,7 +108,7 @@ const TeacherDoubts = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pending Doubts
+                {t('teacherDoubts.pendingDoubts')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -117,7 +119,7 @@ const TeacherDoubts = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Answered Doubts
+                {t('teacherDoubts.answeredDoubts')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -132,19 +134,19 @@ const TeacherDoubts = () => {
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => setFilter('all')}
           >
-            All Doubts
+            {t('teacherDoubts.allDoubts')}
           </Button>
           <Button
             variant={filter === 'pending' ? 'default' : 'outline'}
             onClick={() => setFilter('pending')}
           >
-            Pending
+            {t('teacherDoubts.pending')}
           </Button>
           <Button
             variant={filter === 'answered' ? 'default' : 'outline'}
             onClick={() => setFilter('answered')}
           >
-            Answered
+            {t('teacherDoubts.answered')}
           </Button>
         </div>
 
@@ -154,13 +156,13 @@ const TeacherDoubts = () => {
             {isLoading ? (
               <div className="text-center py-12">
                 <Loader2 className="h-8 w-8 mx-auto animate-spin text-muted-foreground" />
-                <p className="text-muted-foreground mt-2">Loading doubts...</p>
+                <p className="text-muted-foreground mt-2">{t('common.loading')}</p>
               </div>
             ) : filteredDoubts.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
                   <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No doubts found.</p>
+                  <p>{t('teacherDoubts.noDoubts')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -181,9 +183,9 @@ const TeacherDoubts = () => {
                       </div>
                       <Badge variant={doubt.status === 'answered' ? 'default' : 'secondary'}>
                         {doubt.status === 'answered' ? (
-                          <><CheckCircle className="mr-1 h-3 w-3" /> Answered</>
+                          <><CheckCircle className="mr-1 h-3 w-3" /> {t('teacherDoubts.answered')}</>
                         ) : (
-                          <><Clock className="mr-1 h-3 w-3" /> Pending</>
+                          <><Clock className="mr-1 h-3 w-3" /> {t('teacherDoubts.pending')}</>
                         )}
                       </Badge>
                     </div>
@@ -195,7 +197,7 @@ const TeacherDoubts = () => {
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium mb-1">Question:</p>
+                      <p className="text-sm font-medium mb-1">{t('teacherDoubts.question')}:</p>
                       <p className="text-sm text-muted-foreground line-clamp-2">{doubt.question}</p>
                     </div>
 
@@ -213,46 +215,46 @@ const TeacherDoubts = () => {
             {selectedDoubt ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Doubt Details</CardTitle>
+                  <CardTitle>{t('teacherDoubts.doubtDetails')}</CardTitle>
                   <CardDescription>
                     {selectedDoubt.status === 'answered' ? 'View answered doubt' : 'Provide your answer'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium mb-1">Student:</p>
+                    <p className="text-sm font-medium mb-1">{t('teacherDoubts.student')}:</p>
                     <p className="text-sm text-muted-foreground">{selectedDoubt.student_name}</p>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium mb-1">Course:</p>
+                    <p className="text-sm font-medium mb-1">{t('teacherDoubts.course')}:</p>
                     <p className="text-sm text-muted-foreground">
                       {selectedDoubt.course_name} - Lecture {selectedDoubt.lecture_number}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium mb-1">Topic:</p>
+                    <p className="text-sm font-medium mb-1">{t('teacherDoubts.topic')}:</p>
                     <p className="text-sm text-muted-foreground">{selectedDoubt.subject || 'General'}</p>
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium mb-1">Question:</p>
+                    <p className="text-sm font-medium mb-1">{t('teacherDoubts.question')}:</p>
                     <p className="text-sm">{selectedDoubt.question}</p>
                   </div>
 
                   {selectedDoubt.status === 'answered' && selectedDoubt.answer ? (
                     <div className="pt-4 border-t">
-                      <p className="text-sm font-medium mb-1 text-primary">Your Answer:</p>
+                      <p className="text-sm font-medium mb-1 text-primary">{t('teacherDoubts.yourAnswer')}:</p>
                       <p className="text-sm">{selectedDoubt.answer}</p>
                     </div>
                   ) : (
                     <form onSubmit={handleAnswerSubmit} className="pt-4 border-t space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="answer">Your Answer</Label>
+                        <Label htmlFor="answer">{t('teacherDoubts.yourAnswer')}</Label>
                         <Textarea
                           id="answer"
-                          placeholder="Type your detailed answer here..."
+                          placeholder={t('teacherDoubts.typeAnswer')}
                           value={answer}
                           onChange={(e) => setAnswer(e.target.value)}
                           required
@@ -263,12 +265,12 @@ const TeacherDoubts = () => {
                         {isSubmitting ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Submitting...
+                            {t('teacherDoubts.submitting')}
                           </>
                         ) : (
                           <>
                             <Send className="mr-2 h-4 w-4" />
-                            Submit Answer
+                            {t('teacherDoubts.submitAnswer')}
                           </>
                         )}
                       </Button>
@@ -280,14 +282,14 @@ const TeacherDoubts = () => {
               <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
                   <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Select a doubt to view details and answer</p>
+                  <p>{t('teacherDoubts.selectDoubt')}</p>
                 </CardContent>
               </Card>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

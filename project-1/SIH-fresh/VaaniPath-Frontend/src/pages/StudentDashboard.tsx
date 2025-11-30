@@ -12,14 +12,16 @@ import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { getAllCourses, Course } from '@/services/courses';
 import { getMyEnrollments, Enrollment } from '@/services/enrollments';
 import {
-  BookOpen, Search, ArrowRight, Play, Video, Clock, CheckCircle2
+  BookOpen, Search, ArrowRight, Play, Video, Clock, CheckCircle2, Settings as SettingsIcon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
@@ -71,10 +73,10 @@ const StudentDashboard = () => {
           className="mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground font-heading tracking-tight">
-            Welcome Back!
+            {t('common.welcome')}!
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Ready to continue your learning journey? Pick up where you left off or discover something new.
+            {t('dashboard.welcomeMessage')}
           </p>
         </motion.div>
 
@@ -89,11 +91,11 @@ const StudentDashboard = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Play className="h-6 w-6 text-primary" />
-                Continue Learning
+                {t('common.continueLearning')}
               </h2>
               <Button variant="ghost" asChild>
                 <Link to="/my-courses">
-                  View All <ArrowRight className="ml-2 h-4 w-4" />
+                  {t('common.all')} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
@@ -132,8 +134,8 @@ const StudentDashboard = () => {
                       <h3 className="font-semibold text-lg mb-2 line-clamp-1">{enrollment.course_title}</h3>
                       <div className="mt-auto space-y-3">
                         <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>{Math.round(enrollment.progress_percentage || 0)}% Complete</span>
-                          <span>{enrollment.completed_videos}/{enrollment.total_videos} Videos</span>
+                          <span>{Math.round(enrollment.progress_percentage || 0)}% {t('common.completed')}</span>
+                          <span>{enrollment.completed_videos}/{enrollment.total_videos} {t('myCourses.videos')}</span>
                         </div>
                         <Progress value={enrollment.progress_percentage || 0} className="h-2" />
                       </div>
@@ -154,11 +156,11 @@ const StudentDashboard = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <BookOpen className="h-6 w-6 text-primary" />
-              Featured Courses
+              {t('common.recentCourses')}
             </h2>
             <Button variant="ghost" asChild>
               <Link to="/browse-courses">
-                Browse All <ArrowRight className="ml-2 h-4 w-4" />
+                {t('common.all')} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -199,7 +201,7 @@ const StudentDashboard = () => {
                     <CardContent className="p-4 flex-1 flex flex-col">
                       <h3 className="font-semibold text-lg mb-2 line-clamp-2">{course.title}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
-                        {course.description || 'No description available'}
+                        {course.description || t('dashboard.noDescription')}
                       </p>
 
                       <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
@@ -214,7 +216,7 @@ const StudentDashboard = () => {
                       </div>
 
                       <Button className="w-full mt-auto" asChild>
-                        <Link to={`/course/${course.id}`}>View Course</Link>
+                        <Link to={`/course/${course.id}`}>{t('common.viewCourse')}</Link>
                       </Button>
                     </CardContent>
                   </Card>
@@ -224,6 +226,13 @@ const StudentDashboard = () => {
           )}
         </motion.div>
       </div>
+      <Link
+        to="/settings"
+        className="fixed bottom-8 right-8 z-50 p-4 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-110"
+      >
+        <SettingsIcon className="h-6 w-6" />
+      </Link>
+
       <Footer />
     </div>
   );

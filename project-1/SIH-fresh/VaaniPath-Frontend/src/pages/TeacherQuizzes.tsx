@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { getMyVideos, Video } from '@/services/videos';
 import { createQuiz, Question } from '@/services/quiz';
 
 const TeacherQuizzes = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [courses, setCourses] = useState<Video[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -35,7 +37,7 @@ const TeacherQuizzes = () => {
     } catch (error) {
       console.error('Failed to load courses:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to load your courses",
         variant: "destructive",
       });
@@ -67,8 +69,8 @@ const TeacherQuizzes = () => {
   const handleSaveQuiz = async () => {
     if (!selectedCourse || !quizTitle || questions.length === 0) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
+        title: t('common.error'),
+        description: t('teacherQuizzes.validationError'),
         variant: "destructive",
       });
       return;
@@ -78,8 +80,8 @@ const TeacherQuizzes = () => {
     for (const q of questions) {
       if (!q.question || q.options.some(opt => !opt)) {
         toast({
-          title: "Validation Error",
-          description: "Please fill in all question fields and options",
+          title: t('common.error'),
+          description: t('teacherQuizzes.validationError'),
           variant: "destructive",
         });
         return;
@@ -96,7 +98,7 @@ const TeacherQuizzes = () => {
       });
 
       toast({
-        title: "Quiz Created!",
+        title: t('teacherQuizzes.success'),
         description: "Your quiz has been successfully created",
       });
 
@@ -108,7 +110,7 @@ const TeacherQuizzes = () => {
     } catch (error: any) {
       console.error('Failed to save quiz:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: error.response?.data?.detail || "Failed to create quiz",
         variant: "destructive",
       });
@@ -122,20 +124,20 @@ const TeacherQuizzes = () => {
       <Header isAuthenticated userType="teacher" />
       <div className="container px-4 py-8 max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Create Quiz</h1>
-          <p className="text-muted-foreground">Create quizzes to test student understanding</p>
+          <h1 className="text-3xl font-bold mb-2">{t('teacherQuizzes.title')}</h1>
+          <p className="text-muted-foreground">{t('teacherQuizzes.subtitle')}</p>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Quiz Details</CardTitle>
+            <CardTitle>{t('teacherQuizzes.quizDetails')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>Select Course (Video)</Label>
+              <Label>{t('teacherQuizzes.selectCourseVideo')}</Label>
               <Select value={selectedCourse} onValueChange={setSelectedCourse} disabled={isLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder={isLoading ? "Loading courses..." : "Choose a course"} />
+                  <SelectValue placeholder={isLoading ? t('common.loading') : t('teacherQuizzes.chooseCourse')} />
                 </SelectTrigger>
                 <SelectContent>
                   {courses.map((course) => (
@@ -144,27 +146,27 @@ const TeacherQuizzes = () => {
                     </SelectItem>
                   ))}
                   {courses.length === 0 && !isLoading && (
-                    <div className="p-2 text-sm text-muted-foreground text-center">No courses found</div>
+                    <div className="p-2 text-sm text-muted-foreground text-center">{t('teacherCourses.noCourses')}</div>
                   )}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label>Quiz Title</Label>
+              <Label>{t('teacherQuizzes.quizTitle')}</Label>
               <Input
                 value={quizTitle}
                 onChange={(e) => setQuizTitle(e.target.value)}
-                placeholder="Enter quiz title"
+                placeholder={t('teacherQuizzes.enterQuizTitle')}
               />
             </div>
 
             <div>
-              <Label>Description</Label>
+              <Label>{t('teacherQuizzes.description')}</Label>
               <Textarea
                 value={quizDescription}
                 onChange={(e) => setQuizDescription(e.target.value)}
-                placeholder="Enter quiz description"
+                placeholder={t('teacherQuizzes.enterDescription')}
                 rows={3}
               />
             </div>
@@ -176,7 +178,7 @@ const TeacherQuizzes = () => {
             <Card key={qIndex}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Question {qIndex + 1}</CardTitle>
+                  <CardTitle className="text-lg">{t('teacherQuizzes.question')} {qIndex + 1}</CardTitle>
                   {questions.length > 1 && (
                     <Button
                       variant="ghost"
@@ -190,22 +192,22 @@ const TeacherQuizzes = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Question</Label>
+                  <Label>{t('teacherQuizzes.question')}</Label>
                   <Input
                     value={question.question}
                     onChange={(e) => updateQuestion(qIndex, 'question', e.target.value)}
-                    placeholder="Enter your question"
+                    placeholder={t('teacherQuizzes.enterQuestion')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Options</Label>
+                  <Label>{t('teacherQuizzes.options')}</Label>
                   {question.options.map((option, oIndex) => (
                     <div key={oIndex} className="flex items-center gap-2">
                       <Input
                         value={option}
                         onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                        placeholder={`Option ${oIndex + 1}`}
+                        placeholder={`${t('teacherQuizzes.options')} ${oIndex + 1}`}
                       />
                       <input
                         type="radio"
@@ -220,7 +222,7 @@ const TeacherQuizzes = () => {
                 </div>
 
                 <div>
-                  <Label>Points</Label>
+                  <Label>{t('teacherQuizzes.points')}</Label>
                   <Input
                     type="number"
                     value={question.points}
@@ -236,18 +238,18 @@ const TeacherQuizzes = () => {
         <div className="flex gap-4 mt-6">
           <Button onClick={addQuestion} variant="outline" className="flex-1">
             <Plus className="h-4 w-4 mr-2" />
-            Add Question
+            {t('teacherQuizzes.addQuestion')}
           </Button>
           <Button onClick={handleSaveQuiz} className="flex-1" disabled={isSaving}>
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t('teacherQuizzes.saving')}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Quiz
+                {t('teacherQuizzes.saveQuiz')}
               </>
             )}
           </Button>

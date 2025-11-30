@@ -15,46 +15,48 @@ import {
   PlayCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const LandingPage = () => {
+  const { t } = useTranslation();
   const features = [
     {
       icon: Languages,
-      title: 'Multilingual Support',
-      description: 'Learn in your preferred language with support for Hindi, Bengali, Telugu, Tamil, Marathi, and more',
+      title: t('landing.multilingualSupport'),
+      description: t('landing.multilingualDesc'),
       color: 'text-blue-500',
       bg: 'bg-blue-500/10'
     },
     {
       icon: Video,
-      title: 'Video Lectures',
-      description: 'High-quality video content translated to your local language in real-time',
+      title: t('landing.videoLectures'),
+      description: t('landing.videoLecturesDesc'),
       color: 'text-purple-500',
       bg: 'bg-purple-500/10'
     },
     {
       icon: Users,
-      title: 'Expert Teachers',
-      description: 'Learn from experienced educators from across India',
+      title: t('landing.expertTeachers'),
+      description: t('landing.expertTeachersDesc'),
       color: 'text-pink-500',
       bg: 'bg-pink-500/10'
     },
     {
       icon: Globe,
-      title: 'Regional Content',
-      description: 'Content tailored to your region and cultural context',
+      title: t('landing.regionalContent'),
+      description: t('landing.regionalContentDesc'),
       color: 'text-orange-500',
       bg: 'bg-orange-500/10'
     },
   ];
 
   const benefits = [
-    'AI-powered instant translation',
-    'Learn at your own pace',
-    'Progress tracking and certificates',
-    'Interactive learning experience',
-    'Mobile-friendly platform',
-    'Free and accessible education',
+    t('landing.aiTranslation'),
+    t('landing.selfPaced'),
+    t('landing.progressTracking'),
+    t('landing.interactiveLearning'),
+    t('landing.mobileFriendly'),
+    t('landing.freeAccess'),
   ];
 
   return (
@@ -75,7 +77,7 @@ const LandingPage = () => {
               >
                 <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
                 <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent font-bold">
-                  AI-Powered Multilingual Learning
+                  {t('landing.aiPoweredBadge')}
                 </span>
               </motion.div>
 
@@ -83,11 +85,11 @@ const LandingPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-5xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.1] text-foreground"
+                className="text-5xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.3] text-foreground"
               >
-                Learn in Your <br />
+                {t('landing.learnInYour')} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 drop-shadow-sm">
-                  Local Language
+                  {t('landing.localLanguage')}
                 </span>
               </motion.h1>
 
@@ -97,9 +99,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
               >
-                VAANIपथ translates vocational content into regional Indian languages,
-                making quality education accessible to everyone, everywhere.
-                Experience the future of learning today.
+                {t('landing.heroDescription')}
               </motion.p>
 
               <motion.div
@@ -110,13 +110,13 @@ const LandingPage = () => {
               >
                 <Button asChild size="lg" className="h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 transition-all duration-300 bg-gradient-to-r from-primary to-purple-600 border-0 text-white">
                   <Link to="/login">
-                    Get Started
+                    {t('common.getStarted')}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="h-14 px-8 text-lg rounded-full border-2 hover:bg-secondary/50 backdrop-blur-sm transition-all duration-300 bg-background/50 text-foreground">
                   <Link to="/teacherlogin">
-                    Teacher Login
+                    {t('common.teacherLogin')}
                   </Link>
                 </Button>
               </motion.div>
@@ -170,7 +170,7 @@ const LandingPage = () => {
               viewport={{ once: true }}
               className="text-4xl lg:text-5xl font-bold mb-6 font-heading text-foreground"
             >
-              Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">VAANIपथ?</span>
+              {t('landing.whyChoose')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">{t('header.title')}?</span>
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -179,7 +179,7 @@ const LandingPage = () => {
               transition={{ delay: 0.1 }}
               className="text-xl text-muted-foreground max-w-2xl mx-auto"
             >
-              Breaking language barriers in education with cutting-edge AI technology
+              {t('landing.heroSubtitle')}
             </motion.p>
           </div>
 
@@ -216,15 +216,14 @@ const LandingPage = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-4xl lg:text-5xl font-bold mb-8 leading-tight text-foreground">
-                Education Should Have <br />
+              <h2 className="text-4xl lg:text-5xl font-bold mb-8 leading-[1.3] text-foreground">
+                {t('landing.educationBoundaries')} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                  No Boundaries
+                  {t('landing.noBoundaries')}
                 </span>
               </h2>
               <p className="text-lg text-muted-foreground mb-10 leading-relaxed">
-                We believe every student deserves access to quality education in their mother tongue.
-                VAANIपथ uses advanced AI to make this a reality, bridging the gap between aspiration and opportunity.
+                {t('landing.missionStatement')}
               </p>
               <div className="space-y-6">
                 {benefits.map((benefit, index) => (
@@ -261,8 +260,8 @@ const LandingPage = () => {
                       <div className="w-32 h-32 mx-auto bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-8 animate-pulse-glow">
                         <Globe className="w-16 h-16 text-blue-600" />
                       </div>
-                      <h3 className="text-3xl font-bold mb-4 text-foreground">Global Standard</h3>
-                      <p className="text-muted-foreground">Local Language</p>
+                      <h3 className="text-3xl font-bold mb-4 text-foreground">{t('landing.globalStandard')}</h3>
+                      <p className="text-muted-foreground">{t('landing.localLanguage')}</p>
                     </div>
                   </div>
                 </div>
@@ -287,13 +286,13 @@ const LandingPage = () => {
               <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-500/30 rounded-full blur-3xl animate-pulse-glow delay-1000" />
 
               <div className="relative z-10">
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 font-heading text-foreground">Ready to Start Learning?</h2>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 font-heading text-foreground">{t('landing.readyToStart')}</h2>
                 <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                  Join thousands of students transforming their future with VaaniPath.
+                  {t('landing.joinStudents')}
                 </p>
                 <Button asChild size="lg" className="h-16 px-10 text-xl rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 bg-primary text-primary-foreground hover:bg-primary/90 border-0">
                   <Link to="/login">
-                    Create Your Account
+                    {t('landing.createAccount')}
                     <GraduationCap className="ml-3 h-6 w-6" />
                   </Link>
                 </Button>
@@ -306,7 +305,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="border-t border-border bg-background/50 backdrop-blur-md py-12">
         <div className="container px-4 mx-auto text-center">
-          <p className="text-muted-foreground font-medium">© 2025 VAANIपथ. Making Vocational Skills accessible in every language.</p>
+          <p className="text-muted-foreground font-medium">{t('landing.copyright')}</p>
         </div>
       </footer>
     </div>

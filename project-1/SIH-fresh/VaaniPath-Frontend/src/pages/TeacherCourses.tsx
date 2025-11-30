@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { motion } from 'framer-motion';
 
 const TeacherCourses = () => {
+  const { t } = useTranslation();
   const { isTeacher } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -125,10 +127,10 @@ const TeacherCourses = () => {
               </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-3 text-foreground font-heading tracking-tight">
-              My Courses
+              {t('teacherCourses.title')}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Manage your courses and track student engagement
+              {t('teacherCourses.subtitle')}
             </p>
           </div>
           <Button
@@ -137,7 +139,7 @@ const TeacherCourses = () => {
           >
             <Link to="/teacher/create-course">
               <Plus className="mr-2 h-5 w-5" />
-              Create New Course
+              {t('teacherCourses.createNew')}
             </Link>
           </Button>
         </motion.div>
@@ -154,7 +156,7 @@ const TeacherCourses = () => {
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search courses by title or description..."
+                placeholder={t('teacherCourses.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 h-12 bg-background/50 border-input focus:ring-primary transition-all hover:border-primary/50"
@@ -176,13 +178,13 @@ const TeacherCourses = () => {
               <SelectTrigger className="w-full lg:w-[200px] h-12 bg-background/50 border-input">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-primary" />
-                  <SelectValue placeholder="Subject" />
+                  <SelectValue placeholder={t('teacherCourses.subject')} />
                 </div>
               </SelectTrigger>
               <SelectContent>
                 {subjects.map((subject) => (
                   <SelectItem key={subject} value={subject}>
-                    {subject === 'all' ? 'All Subjects' : subject.charAt(0).toUpperCase() + subject.slice(1)}
+                    {subject === 'all' ? t('teacherCourses.allSubjects') : subject.charAt(0).toUpperCase() + subject.slice(1)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -192,7 +194,7 @@ const TeacherCourses = () => {
           {/* Active Filters */}
           {(selectedSubject !== 'all' || searchQuery) && (
             <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border/50">
-              <span className="text-sm text-muted-foreground">Active filters:</span>
+              <span className="text-sm text-muted-foreground">{t('teacherCourses.activeFilters')}:</span>
               {searchQuery && (
                 <Badge variant="secondary" className="gap-1">
                   Search: {searchQuery}
@@ -213,7 +215,7 @@ const TeacherCourses = () => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <BookOpen className="h-16 w-16 text-primary mb-4 animate-pulse" />
-            <p className="text-muted-foreground">Loading your courses...</p>
+            <p className="text-muted-foreground">{t('teacherCourses.loading')}</p>
           </div>
         ) : filteredCourses.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -251,7 +253,7 @@ const TeacherCourses = () => {
                       >
                         <Link to={`/teacher/course/${course.id}`}>
                           <Edit className="h-4 w-4 mr-2" />
-                          Manage
+                          {t('teacherCourses.manage')}
                         </Link>
                       </Button>
                     </div>
@@ -278,7 +280,7 @@ const TeacherCourses = () => {
                     <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-muted/30 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Video className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{course.total_videos || 0} videos</span>
+                        <span className="text-sm font-medium">{course.total_videos || 0} {t('teacherCourses.videos')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
@@ -308,7 +310,7 @@ const TeacherCourses = () => {
                     <div className="flex items-center justify-between pt-4 border-t border-border/50">
                       <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 p-0 h-auto font-medium">
                         <Link to={`/course-player/${course.id}`}>
-                          View Course
+                          {t('teacherCourses.viewCourse')}
                         </Link>
                       </Button>
 
@@ -326,18 +328,18 @@ const TeacherCourses = () => {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Course?</AlertDialogTitle>
+                              <AlertDialogTitle>{t('teacherCourses.deleteConfirmTitle')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{course.title}"? This will also delete all videos in this course. This action cannot be undone.
+                                {t('teacherCourses.deleteConfirmDesc')}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel>{t('teacherCourses.cancel')}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDelete(course.id, course.title)}
                                 className="bg-destructive hover:bg-destructive/90"
                               >
-                                Delete
+                                {t('teacherCourses.delete')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -357,16 +359,16 @@ const TeacherCourses = () => {
           >
             <div className="glass-card border-white/20 dark:border-white/10 p-12 rounded-2xl shadow-xl max-w-md mx-auto">
               <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-6 opacity-50" />
-              <h3 className="text-xl font-bold text-foreground mb-2">No courses found</h3>
+              <h3 className="text-xl font-bold text-foreground mb-2">{t('teacherCourses.noCourses')}</h3>
               <p className="text-muted-foreground mb-6">
                 {searchQuery || selectedSubject !== 'all'
-                  ? 'Try adjusting your filters or search query'
-                  : 'Create your first course to start teaching'}
+                  ? t('teacherCourses.tryAdjusting')
+                  : t('teacherCourses.createFirst')}
               </p>
               <Button asChild>
                 <Link to="/teacher/create-course">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Course
+                  {t('teacherCourses.createNew')}
                 </Link>
               </Button>
             </div>

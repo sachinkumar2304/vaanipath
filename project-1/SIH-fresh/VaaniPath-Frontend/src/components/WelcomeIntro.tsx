@@ -31,7 +31,7 @@ export const WelcomeIntro = ({ onComplete }: WelcomeIntroProps) => {
                 }
                 return prev + 1;
             });
-        }, 750); // 0.75 seconds per language
+        }, 500); // 0.5 seconds per language
 
         return () => clearInterval(timer);
     }, [onComplete]);
@@ -75,10 +75,6 @@ export const WelcomeIntro = ({ onComplete }: WelcomeIntroProps) => {
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={step}
-                        initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
-                        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-                        transition={{ duration: 0.4 }}
                         className="text-center"
                     >
                         <h1 className="text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)] flex items-center justify-center gap-6">

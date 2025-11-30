@@ -21,8 +21,10 @@ import {
     BookOpen, Search, Filter, X, Video, Clock, Languages, Users, Check
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const BrowseCourses = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { toast } = useToast();
     const { user, isTeacher } = useAuth();
@@ -133,10 +135,10 @@ const BrowseCourses = () => {
                         </div>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold mb-3 text-foreground font-heading tracking-tight">
-                        Discover Courses
+                        {t('browseCourses.title')}
                     </h1>
                     <p className="text-lg text-muted-foreground">
-                        Browse and enroll in courses to start learning
+                        {t('browseCourses.subtitle')}
                     </p>
                 </motion.div>
 
@@ -152,7 +154,7 @@ const BrowseCourses = () => {
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input
-                                placeholder="Search courses..."
+                                placeholder={t('browseCourses.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && loadCourses()}
@@ -179,13 +181,13 @@ const BrowseCourses = () => {
                                 <SelectTrigger className="w-full lg:w-[160px] h-12 bg-background/50 border-input">
                                     <div className="flex items-center gap-2">
                                         <Filter className="h-4 w-4 text-primary" />
-                                        <SelectValue placeholder="Subject" />
+                                        <SelectValue placeholder={t('browseCourses.subject')} />
                                     </div>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {subjects.map((subject) => (
                                         <SelectItem key={subject} value={subject}>
-                                            {subject === 'all' ? 'All Subjects' : subject.charAt(0).toUpperCase() + subject.slice(1)}
+                                            {subject === 'all' ? t('browseCourses.allSubjects') : subject.charAt(0).toUpperCase() + subject.slice(1)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -195,13 +197,13 @@ const BrowseCourses = () => {
                                 <SelectTrigger className="w-full lg:w-[160px] h-12 bg-background/50 border-input">
                                     <div className="flex items-center gap-2">
                                         <Languages className="h-4 w-4 text-primary" />
-                                        <SelectValue placeholder="Language" />
+                                        <SelectValue placeholder={t('browseCourses.language')} />
                                     </div>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {languages.map((lang) => (
                                         <SelectItem key={lang} value={lang}>
-                                            {lang === 'all' ? 'All Languages' : lang.toUpperCase()}
+                                            {lang === 'all' ? t('browseCourses.allLanguages') : lang.toUpperCase()}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -214,7 +216,7 @@ const BrowseCourses = () => {
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <BookOpen className="h-16 w-16 text-primary mb-4 animate-pulse" />
-                        <p className="text-muted-foreground">Loading courses...</p>
+                        <p className="text-muted-foreground">{t('browseCourses.loading')}</p>
                     </div>
                 ) : courses.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -249,7 +251,7 @@ const BrowseCourses = () => {
                                                 <div className="absolute top-3 right-3">
                                                     <Badge className="bg-green-500 hover:bg-green-600">
                                                         <Check className="h-3 w-3 mr-1" />
-                                                        Enrolled
+                                                        {t('browseCourses.enrolled')}
                                                     </Badge>
                                                 </div>
                                             )}
@@ -263,7 +265,7 @@ const BrowseCourses = () => {
                                                 </Badge>
                                                 {course.teacher_name && (
                                                     <span className="text-xs text-muted-foreground">
-                                                        by {course.teacher_name}
+                                                        {t('browseCourses.by')} {course.teacher_name}
                                                     </span>
                                                 )}
                                             </div>
@@ -272,7 +274,7 @@ const BrowseCourses = () => {
                                                 {course.title}
                                             </CardTitle>
                                             <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                                                {course.description || 'No description provided'}
+                                                {course.description || t('browseCourses.noDescription')}
                                             </p>
                                         </CardHeader>
 
@@ -316,14 +318,14 @@ const BrowseCourses = () => {
                                                     className="w-full"
                                                     onClick={() => navigate('/my-courses')}
                                                 >
-                                                    Continue Learning
+                                                    {t('myCourses.continue')}
                                                 </Button>
                                             ) : (
                                                 <Button
                                                     className="w-full"
                                                     onClick={() => navigate(`/course/${course.id}`)}
                                                 >
-                                                    View Course
+                                                    {t('common.viewCourse')}
                                                 </Button>
                                             )}
                                         </CardContent>
@@ -340,9 +342,9 @@ const BrowseCourses = () => {
                     >
                         <div className="glass-card border-white/20 dark:border-white/10 p-12 rounded-2xl shadow-xl max-w-md mx-auto">
                             <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-6 opacity-50" />
-                            <h3 className="text-xl font-bold text-foreground mb-2">No courses found</h3>
+                            <h3 className="text-xl font-bold text-foreground mb-2">{t('browseCourses.noCourses')}</h3>
                             <p className="text-muted-foreground">
-                                Try adjusting your search or filters
+                                {t('browseCourses.adjustFilters')}
                             </p>
                         </div>
                     </motion.div>

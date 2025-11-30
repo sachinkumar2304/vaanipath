@@ -40,6 +40,7 @@ import BrowseCourses from "./pages/BrowseCourses";
 import MyCourses from "./pages/MyCourses";
 import CoursePlayer from "./pages/CoursePlayer";
 import NotFound from "./pages/NotFound";
+import { Settings } from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -48,7 +49,7 @@ const AppContent = () => {
 
   // Only show welcome on first visit (persisted across reloads)
   useEffect(() => {
-    const hasVisited = localStorage.getItem("hasVisited");
+    const hasVisited = sessionStorage.getItem("hasVisited");
     if (hasVisited) {
       setShowWelcome(false);
     }
@@ -56,7 +57,7 @@ const AppContent = () => {
 
   const handleWelcomeComplete = () => {
     setShowWelcome(false);
-    localStorage.setItem("hasVisited", "true");
+    sessionStorage.setItem("hasVisited", "true");
   };
 
   return (
@@ -95,6 +96,7 @@ const AppContent = () => {
           <Route path="/browse-courses" element={<BrowseCourses />} />
           <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/course-player/:courseId" element={<CoursePlayer />} />
+          <Route path="/settings" element={<Settings />} />
 
           {/* Teacher Routes */}
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />

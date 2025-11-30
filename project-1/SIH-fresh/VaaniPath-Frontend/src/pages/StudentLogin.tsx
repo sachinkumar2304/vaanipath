@@ -12,8 +12,10 @@ import { GraduationCap, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const StudentLogin = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login, signup } = useAuth();
@@ -155,8 +157,8 @@ const StudentLogin = () => {
             >
               <GraduationCap className="h-10 w-10 text-primary" />
             </motion.div>
-            <h1 className="text-4xl font-bold mb-3 text-foreground font-heading tracking-tight">Student Portal</h1>
-            <p className="text-lg text-muted-foreground">Continue your learning journey</p>
+            <h1 className="text-4xl font-bold mb-3 text-foreground font-heading tracking-tight">{t('auth.studentPortal')}</h1>
+            <p className="text-lg text-muted-foreground">{t('auth.studentSubtitle')}</p>
           </div>
 
           <Card className="glass-card border-white/20 dark:border-white/10 shadow-2xl overflow-hidden relative">
@@ -165,20 +167,20 @@ const StudentLogin = () => {
 
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50 m-6 mb-0 rounded-xl">
-                <TabsTrigger value="login" className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-lg transition-all font-medium">Login</TabsTrigger>
-                <TabsTrigger value="signup" className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-lg transition-all font-medium">Sign Up</TabsTrigger>
+                <TabsTrigger value="login" className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-lg transition-all font-medium">{t('common.login')}</TabsTrigger>
+                <TabsTrigger value="signup" className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm rounded-lg transition-all font-medium">{t('common.signup')}</TabsTrigger>
               </TabsList>
 
               <div className="p-6 md:p-8 pt-6">
                 <TabsContent value="login" className="mt-0 space-y-6">
                   <div className="space-y-2 text-center">
-                    <h2 className="text-2xl font-bold text-foreground">Welcome Back</h2>
-                    <p className="text-sm text-muted-foreground">Ready to learn something new today?</p>
+                    <h2 className="text-2xl font-bold text-foreground">{t('auth.welcomeBack')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('auth.readyToLearn')}</p>
                   </div>
                   <form onSubmit={handleLogin} className="space-y-5">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="login-email">Student Email</Label>
+                        <Label htmlFor="login-email">{t('auth.studentEmail')}</Label>
                         <Input
                           id="login-email"
                           type="email"
@@ -191,8 +193,8 @@ const StudentLogin = () => {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <Label htmlFor="login-password">Password</Label>
-                          <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
+                          <Label htmlFor="login-password">{t('auth.password')}</Label>
+                          <a href="#" className="text-xs text-primary hover:underline">{t('auth.forgotPassword')}</a>
                         </div>
                         <Input
                           id="login-password"
@@ -212,21 +214,21 @@ const StudentLogin = () => {
                       {isLoggingIn ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Logging in...
+                          {t('auth.loggingIn')}
                         </>
-                      ) : 'Start Learning'}
+                      ) : t('auth.startLearning')}
                     </Button>
                   </form>
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-0 space-y-6">
                   <div className="space-y-2 text-center">
-                    <h2 className="text-2xl font-bold text-foreground">Join VaaniPath</h2>
-                    <p className="text-sm text-muted-foreground">Create your free account to get started</p>
+                    <h2 className="text-2xl font-bold text-foreground">{t('auth.joinVaaniPath')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('auth.createAccountDesc')}</p>
                   </div>
                   <form onSubmit={handleSignup} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
                       <Input
                         id="signup-name"
                         placeholder="e.g. Rahul Kumar"
@@ -237,7 +239,7 @@ const StudentLogin = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email Address</Label>
+                      <Label htmlFor="signup-email">{t('auth.emailAddress')}</Label>
                       <Input
                         id="signup-email"
                         type="email"
@@ -250,7 +252,7 @@ const StudentLogin = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="signup-password">Password</Label>
+                        <Label htmlFor="signup-password">{t('auth.password')}</Label>
                         <Input
                           id="signup-password"
                           type="password"
@@ -261,7 +263,7 @@ const StudentLogin = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirm</Label>
+                        <Label htmlFor="confirm-password">{t('auth.confirm')}</Label>
                         <Input
                           id="confirm-password"
                           type="password"
@@ -274,10 +276,10 @@ const StudentLogin = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="language">Preferred Language</Label>
+                      <Label htmlFor="language">{t('auth.preferredLanguage')}</Label>
                       <Select onValueChange={(value) => setSignupData({ ...signupData, preferredLanguage: value })}>
                         <SelectTrigger id="language" className="bg-background/50 border-input focus:ring-primary transition-all hover:border-primary/50">
-                          <SelectValue placeholder="Select your language" />
+                          <SelectValue placeholder={t('auth.selectLanguage')} />
                         </SelectTrigger>
                         <SelectContent>
                           {languages.map((lang) => (
@@ -289,7 +291,7 @@ const StudentLogin = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="state">State</Label>
+                        <Label htmlFor="state">{t('auth.state')}</Label>
                         <Input
                           id="state"
                           placeholder="State"
@@ -300,7 +302,7 @@ const StudentLogin = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
+                        <Label htmlFor="city">{t('auth.city')}</Label>
                         <Input
                           id="city"
                           placeholder="City"
@@ -313,7 +315,7 @@ const StudentLogin = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="region">Region</Label>
+                      <Label htmlFor="region">{t('auth.region')}</Label>
                       <Input
                         id="region"
                         placeholder="Region"
@@ -332,9 +334,9 @@ const StudentLogin = () => {
                       {isSigningUp ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating Account...
+                          {t('auth.creatingAccount')}
                         </>
-                      ) : 'Create Free Account'}
+                      ) : t('auth.createFreeAccount')}
                     </Button>
                   </form>
                 </TabsContent>
@@ -345,7 +347,7 @@ const StudentLogin = () => {
           <div className="mt-8 text-center">
             <Link to="/landingpage" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 group">
               <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Back to Home
+              {t('auth.backToHome')}
             </Link>
           </div>
         </motion.div>
