@@ -1,0 +1,14 @@
+node_modules/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+dist/
+build/
+.vscode/
+.idea/
+*.log
+
+# Large files - download separately
+ffmpeg*.zip
+ffmpeg-*-essentials_build/

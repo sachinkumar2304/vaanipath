@@ -1,0 +1,12 @@
+{
+  "inventory": "inventory",
+  "billing": "billing",
+  "POS": "POS",
+  "customer service": "customer service",
+  "barcode": "barcode",
+  "restocking": "restocking",
+  "discount": "discount",
+  "merchandising": "merchandising",
+  "returns": "returns",
+  "cash counter": "cash counter"
+}

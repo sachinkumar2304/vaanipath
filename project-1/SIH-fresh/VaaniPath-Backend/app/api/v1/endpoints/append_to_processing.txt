@@ -1,0 +1,242 @@
+
+# ==========================================
+# STUDENT ENDPOINTS (Content Dubbing)
+# ==========================================
+
+@router.get("/content/{video_id}/{language}")
+async def get_dubbed_content(
+    video_id: str,
+    language: str,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    🎬 **[STUDENT] Get Dubbed/Translated Content**
+    
+    Returns dubbed video/audio or translated document URL.
+    Implements smart caching - returns existing URL if available, triggers generation if not.
+    """
+    try:
+        if not supabase:
+            raise HTTPException(status_code=503, detail="Database not configured")
+        
+        # 1. Verify student is enrolled
+        enrollment = supabase.table("enrollments").select("id").eq(
+            "user_id", current_user["id"]
+        ).eq("video_id", video_id).execute()
+        
+        if not enrollment.data:
+            raise HTTPException(status_code=403, detail="Not enrolled in this course")
+        
+        # 2. Get video info to determine content type
+        video_response = supabase.table("videos").select("content_type, file_url, title").eq(
+            "id", video_id
+        ).execute()
+        
+        if not video_response.data:
+            raise HTTPException(status_code=404, detail="Content not found")
+        
+        video = video_response.data[0]
+        content_type = video.get("content_type", "video")
+        
+        # 3. Check cache - look for existing translation
+        translation_response = supabase.table("translations").select("*").eq(
+            "video_id", video_id
+        ).eq("language", language).execute()
+        
+        # 4. CACHING LOGIC - Return if already exists
+        if translation_response.data:
+            translation = translation_response.data[0]
+            status_val = translation.get("status")
+            
+            # If completed, return cached URL
+            if status_val == "completed":
+                content_url = None
+                if content_type == "video":
+                    content_url = translation.get("dubbed_video_url")
+                elif content_type == "audio":
+                    content_url = translation.get("audio_url")
+                elif content_type == "document":
+                    content_url = translation.get("dubbed_video_url")
+                
+                if content_url:
+                    return {
+                        "video_id": video_id,
+                        "language": language,
+                        "content_type": content_type,
+                        "content_url": content_url,
+                        "status": "completed",
+                        "cached": True,
+                        "message": "Content already available"
+                    }
+            
+            # If currently processing, return status
+            if status_val in ["pending", "processing"]:
+                return {
+                    "video_id": video_id,
+                    "language": language,
+                    "content_type": content_type,
+                    "status": "processing",
+                    "cached": False,
+                    "message": "Content is being generated. Please check back in a few minutes."
+                }
+            
+            # If failed previously, retry
+            if status_val == "failed":
+                supabase.table("translations").update({
+                    "status": "processing",
+                    "error_message": None,
+                    "updated_at": datetime.utcnow().isoformat()
+                }).eq("video_id", video_id).eq("language", language).execute()
+                
+                background_tasks.add_task(process_dubbing_task, video_id, language, content_type)
+                
+                return {
+                    "video_id": video_id,
+                    "language": language,
+                    "content_type": content_type,
+                    "status": "processing",
+                    "cached": False,
+                    "message": "Retrying content generation"
+                }
+        
+        # 5. Not in cache - create new entry and trigger generation
+        supabase.table("translations").insert({
+            "video_id": video_id,
+            "language": language,
+            "translated_text": "", 
+            "status": "processing",
+            "created_at": datetime.utcnow().isoformat()
+        }).execute()
+        
+        background_tasks.add_task(process_dubbing_task, video_id, language, content_type)
+        
+        return {
+            "video_id": video_id,
+            "language": language,
+            "content_type": content_type,
+            "status": "processing",
+            "cached": False,
+            "message": f"{content_type.capitalize()} dubbing/translation started. This may take 2-5 minutes."
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"Get dubbed content error: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/content/{video_id}/{language}/status")
+async def check_dubbing_status(
+    video_id: str,
+    language: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    📊 **[STUDENT] Check Dubbing/Translation Status**
+    
+    Poll this endpoint to check if content is ready
+    """
+    try:
+        if not supabase:
+            raise HTTPException(status_code=503, detail="Database not configured")
+        
+        translation = supabase.table("translations").select("status, error_message, dubbed_video_url, audio_url").eq(
+            "video_id", video_id
+        ).eq("language", language).execute()
+        
+        if not translation.data:
+            return {
+                "status": "not_started",
+                "progress": 0,
+                "message": "Dubbing/translation not requested yet"
+            }
+        
+        data = translation.data[0]
+        status_val = data.get("status")
+        
+        if status_val == "completed":
+            content_url = data.get("dubbed_video_url") or data.get("audio_url")
+            return {
+                "status": "completed",
+                "progress": 100,
+                "content_url": content_url,
+                "message": "Content is ready!"
+            }
+        elif status_val == "processing":
+            return {
+                "status": "processing",
+                "progress": 50,
+                "message": "Processing... Please wait."
+            }
+        elif status_val == "failed":
+            return {
+                "status": "failed",
+                "progress": 0,
+                "error": data.get("error_message"),
+                "message": "Generation failed. Please try again."
+            }
+        else:
+            return {
+                "status": "pending",
+                "progress": 10,
+                "message": "Queued for processing"
+            }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/content/{video_id}/available-languages")
+async def get_available_languages(
+    video_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    🌐 **[STUDENT] Get Available Dubbed Languages**
+    
+    Returns list of languages with their availability status
+    """
+    try:
+        if not supabase:
+            raise HTTPException(status_code=503, detail="Database not configured")
+        
+        video = supabase.table("videos").select("target_languages, source_language").eq(
+            "id", video_id
+        ).execute()
+        
+        if not video.data:
+            raise HTTPException(status_code=404, detail="Video not found")
+        
+        target_languages = video.data[0].get("target_languages", [])
+        source_language = video.data[0].get("source_language")
+        
+        translations = supabase.table("translations").select("language, status").eq(
+            "video_id", video_id
+        ).eq("status", "completed").execute()
+        
+        completed_languages = {t["language"] for t in translations.data} if translations.data else set()
+        
+        languages = []
+        languages.append({
+            "code": source_language,
+            "available": True,
+            "status": "original"
+        })
+        
+        for lang in target_languages:
+            languages.append({
+                "code": lang,
+                "available": lang in completed_languages,
+                "status": "completed" if lang in completed_languages else "not_generated"
+            })
+        
+        return {
+            "video_id": video_id,
+            "languages": languages
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

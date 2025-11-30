@@ -1,0 +1,12 @@
+{
+  "patient": "patient",
+  "diagnosis": "diagnosis",
+  "treatment": "treatment",
+  "procedure": "procedure",
+  "sanitization": "sanitization",
+  "emergency": "emergency",
+  "first aid": "first aid",
+  "consent": "consent",
+  "infection control": "infection control",
+  "nurse": "nurse"
+}

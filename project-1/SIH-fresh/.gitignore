@@ -1,0 +1,16 @@
+# Node modules
+node_modules/
+# Python caches
+__pycache__/
+*.pyc
+# Environment files
+.env
+# Build artifacts
+build/
+# Vite/Vue/React dev files
+.vite/
+.DS_Store
+# Logs
+logs/
+# Secrets
+*.pem

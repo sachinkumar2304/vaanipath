@@ -1,0 +1,21 @@
+{
+  "Farmer": "Farmer",
+  "Agronomist": "Agronomist",
+  "Seed": "Seed",
+  "Soil": "Soil",
+  "Irrigation": "Irrigation",
+  "Fertilizer": "Fertilizer",
+  "Pesticide": "Pesticide",
+  "Crop": "Crop",
+  "Harvest": "Harvest",
+  "Yield": "Yield",
+  "Storage": "Storage",
+  "Cold Chain": "Cold Chain",
+  "Warehouse": "Warehouse",
+  "Quality Grading": "Quality Grading",
+  "Market Price": "Market Price",
+  "MSP": "MSP",
+  "Organic Farming": "Organic Farming",
+  "Dairy": "Dairy",
+  "Poultry": "Poultry"
+}

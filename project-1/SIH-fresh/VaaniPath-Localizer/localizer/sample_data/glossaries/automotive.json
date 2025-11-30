@@ -1,0 +1,12 @@
+{
+  "engine": "engine",
+  "transmission": "transmission",
+  "brake": "brake",
+  "clutch": "clutch",
+  "suspension": "suspension",
+  "diagnostics": "diagnostics",
+  "workshop": "workshop",
+  "service manual": "service manual",
+  "safety gear": "safety gear",
+  "apprentice": "apprentice"
+}
