@@ -421,7 +421,9 @@ async def upload_and_localize(
         "manifest_path": manifest_path,
         "status": "success",
         "transcript_original": full_text_original.strip(),
-        "transcript_translated": full_text_translated.strip()
+        "transcript_translated": full_text_translated.strip(),
+        "subtitle_url": m.get("subtitle_url"),  # 🚀 NEW: Return subtitle URL
+        "english_subtitle_url": m.get("english_subtitle_url")  # 🚀 NEW: Return English subtitle URL
     }
 
 

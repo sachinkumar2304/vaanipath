@@ -6,7 +6,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Dict, Any, List
 import subprocess
 from .config import CHUNK_LENGTH_SECONDS, CHUNK_OVERLAP_SECONDS, MODE_CONFIG, TRANSLATION_DEFAULT_MODEL
-from .utils import mkdir_p, setup_logger, get_worker_count, FFMPEG, FFPROBE
+from .utils import mkdir_p, setup_logger, get_worker_count, FFMPEG, FFPROBE, generate_vtt
 from .video_splitter import split_video
 from .stt import transcribe
 from .glossary import DEFAULT_GLOSSARY, merge_glossaries, clean_transcript
@@ -82,6 +82,7 @@ def process_chunk(
         "text_translated": text_adapted,
         "audio_path": final_audio_path,
         "srt_path": srt_out,
+        "segments": segments,  # 🚀 Return segments for fine-grained VTT
     }
 
 # Gemini-preferred languages that should use single-pass processing
@@ -381,6 +382,48 @@ def run_job(
         )
         logger.info(f"📤 Cloudinary URL (video): {cloudinary_url}")
 
+        # 📝 Generate and Upload Subtitles (VTT) - Translated
+        vtt_path = os.path.join(base_out, "subtitles.vtt")
+        generate_vtt(results, vtt_path)
+        subtitle_url = upload_video_to_cloudinary(
+            file_path=vtt_path,
+            video_id=job_id,
+            language=target,
+            content_type='subtitle'
+        )
+        logger.info(f"📝 Subtitle URL ({target}): {subtitle_url}")
+
+        # 📝 Generate and Upload English Subtitles (Original)
+        english_vtt_path = os.path.join(base_out, "subtitles_en.vtt")
+        # Create chunks with original text for English VTT
+        english_chunks = []
+        for chunk in results:
+            chunk_start_time = chunk["start"]
+            # 🚀 Use segments if available for fine-grained timestamps
+            if "segments" in chunk and chunk["segments"]:
+                for seg in chunk["segments"]:
+                    english_chunks.append({
+                        "start": chunk_start_time + seg["start"],
+                        "end": chunk_start_time + seg["end"],
+                        "text": seg["text"]
+                    })
+            else:
+                # Fallback to chunk-level text
+                english_chunks.append({
+                    "start": chunk["start"],
+                    "end": chunk["end"],
+                    "text": chunk.get("text_original", chunk.get("text", ""))
+                })
+        
+        generate_vtt(english_chunks, english_vtt_path)
+        english_subtitle_url = upload_video_to_cloudinary(
+            file_path=english_vtt_path,
+            video_id=job_id,
+            language="en",
+            content_type='subtitle'
+        )
+        logger.info(f"📝 English Subtitle URL: {english_subtitle_url}")
+
         manifest = build_manifest(
             job_id=job_id,
             mode=mode,
@@ -393,6 +436,7 @@ def run_job(
             final_audio=str(final_audio_path),
             final_video=str(final_video_path),
             cloudinary_url=cloudinary_url,  # 🚀 Store Cloudinary URL in manifest
+            subtitle_url=subtitle_url,      # 🚀 Store Subtitle URL in manifest
         )
 
     elapsed = time.time() - start_time

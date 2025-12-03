@@ -103,6 +103,14 @@ async def process_dubbing_task(video_id: str, language: str, content_type: str =
         
         if content_type == "video":
             update_data["dubbed_video_url"] = dubbed_url
+            # 🚀 NEW: Save Subtitle URL
+            subtitle_url = result.get('subtitle_url')
+            print(f"🔍 DEBUG: subtitle_url from ML service = {subtitle_url}")
+            if subtitle_url:
+                update_data["subtitle_url"] = subtitle_url
+                print(f"✅ DEBUG: Saving subtitle_url to database: {subtitle_url}")
+            else:
+                print("⚠️ DEBUG: No subtitle_url in ML response!")
         elif content_type == "audio":
             update_data["audio_url"] = dubbed_url
         elif content_type == "document":
@@ -112,6 +120,8 @@ async def process_dubbing_task(video_id: str, language: str, content_type: str =
         transcript_translated = result.get('transcript_translated')
         if transcript_translated:
             update_data["translated_text"] = transcript_translated
+        
+        print(f"📝 DEBUG: update_data = {update_data}")
         
         supabase.table("translations").update(update_data).eq(
             "video_id", video_id
@@ -129,6 +139,32 @@ async def process_dubbing_task(video_id: str, language: str, content_type: str =
                 "full_text": transcript_original,
                 "status": "completed"
             }
+            
+            if trans_check.data:
+                supabase.table("transcriptions").update(trans_data).eq("id", trans_check.data[0]['id']).execute()
+            else:
+                supabase.table("transcriptions").insert(trans_data).execute()
+                
+        # 🚀 NEW: Save English Subtitle URL
+        english_subtitle_url = result.get('english_subtitle_url')
+        if english_subtitle_url:
+            print(f"✅ DEBUG: Saving English subtitle_url: {english_subtitle_url}")
+            # Check if English translation entry exists
+            eng_check = supabase.table("translations").select("id").eq("video_id", video_id).eq("language", "en").execute()
+            
+            eng_data = {
+                "video_id": video_id,
+                "language": "en",
+                "subtitle_url": english_subtitle_url,
+                "status": "completed",
+                # Use original transcript as translated text for English entry to satisfy NOT NULL constraint
+                "translated_text": transcript_original or "Original English Transcript" 
+            }
+            
+            if eng_check.data:
+                supabase.table("translations").update(eng_data).eq("id", eng_check.data[0]['id']).execute()
+            else:
+                supabase.table("translations").insert(eng_data).execute()
             
             if trans_check.data:
                 supabase.table("transcriptions").update(trans_data).eq("id", trans_check.data[0]['id']).execute()

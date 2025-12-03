@@ -89,6 +89,31 @@ const CoursePlayer = () => {
         handleLanguageChange(selectedLanguage);
     }, [selectedLanguage]); // Only depend on selectedLanguage, NOT currentVideo
 
+    // 🚀 Force correct subtitle track selection
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const targetLang = selectedLanguage === 'en-IN' ? 'en' : selectedLanguage;
+
+        // Give browser a moment to load tracks
+        const timer = setTimeout(() => {
+            if (!video.textTracks) return;
+
+            for (let i = 0; i < video.textTracks.length; i++) {
+                const track = video.textTracks[i];
+                // Check if this track matches our target language
+                if (track.language === targetLang) {
+                    track.mode = 'showing';
+                } else {
+                    track.mode = 'hidden';
+                }
+            }
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [selectedLanguage, currentVideo]);
+
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -147,6 +172,10 @@ const CoursePlayer = () => {
                 if (!availableLanguages.includes(language)) {
                     setAvailableLanguages([...availableLanguages, language]);
                 }
+
+                // 🚀 Reload course to fetch updated subtitles
+                await loadCourse();
+
                 toast({
                     title: 'Dubbing Complete!',
                     description: 'Now playing in selected language',
@@ -346,17 +375,38 @@ const CoursePlayer = () => {
                             transition={{ duration: 0.5 }}
                             className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl"
                         >
-                            {currentVideo ? (
+                            {isDubbing ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <div className="text-center">
+                                        <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto mb-4" />
+                                        <p className="text-white text-lg">Processing dubbing...</p>
+                                    </div>
+                                </div>
+                            ) : currentVideo ? (
                                 <video
                                     ref={videoRef}
                                     key={currentVideo.id + (dubbedUrl || '')}
                                     src={dubbedUrl || currentVideo.file_url}
                                     poster={currentVideo.thumbnail_url}
                                     controls
+                                    controlsList="nodownload"
                                     className="w-full h-full"
                                     onEnded={handleVideoEnd}
                                     onTimeUpdate={handleVideoTimeUpdate}
-                                />
+                                    crossOrigin="anonymous"
+                                >
+                                    {/* 🚀 Subtitle Tracks */}
+                                    {currentVideo.subtitles && Object.entries(currentVideo.subtitles).map(([lang, url]) => (
+                                        <track
+                                            key={lang}
+                                            kind="subtitles"
+                                            src={url as string}
+                                            srcLang={lang}
+                                            label={INDIAN_LANGUAGES.find(l => l.code === lang)?.name || (lang === 'en' ? 'English' : lang)}
+                                            default={lang === selectedLanguage || (selectedLanguage === 'en-IN' && lang === 'en')}
+                                        />
+                                    ))}
+                                </video>
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-white">
                                     <p>No video selected</p>
