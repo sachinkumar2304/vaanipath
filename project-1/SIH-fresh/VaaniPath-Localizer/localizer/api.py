@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from .app import run_job, get_manifest, list_chunks, get_chunk_detail, reprocess_chunk
+from .podcast_generator import PodcastGenerator
+from .cloudinary_uploader import upload_video_to_cloudinary
 
 
 app = FastAPI(title="Localizer API", description="REST endpoints for video localization")
@@ -439,3 +441,45 @@ async def upload_alias(
     voice: Optional[str] = Form(None),
 ) -> Dict[str, Any]:
     return await upload_and_localize(file, source, target, course_id, job_id, mode, voice)
+
+
+# -----------------
+# Podcast Generator Endpoint
+# -----------------
+class PodcastRequest(BaseModel):
+    text: str
+    language: str = "english"
+
+@app.post("/podcast/generate")
+async def generate_podcast(req: PodcastRequest) -> Dict[str, Any]:
+    try:
+        # Initialize generator
+        output_dir = os.path.join(os.path.dirname(__file__), "output", "podcasts")
+        generator = PodcastGenerator(output_dir)
+        
+        # Generate Podcast
+        local_path = await generator.create_podcast(req.text, req.language)
+        
+        # Upload to Cloudinary
+        cloudinary_url = upload_video_to_cloudinary(
+            file_path=local_path,
+            video_id=f"podcast_{req.language}",
+            language=req.language,
+            content_type="audio"
+        )
+        
+        # Cleanup
+        try:
+            os.remove(local_path)
+        except:
+            pass
+            
+        return {
+            "status": "success",
+            "audio_url": cloudinary_url,
+            "duration": 0 # TODO: Calculate duration if needed
+        }
+        
+    except Exception as e:
+        print(f"Podcast Generation Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

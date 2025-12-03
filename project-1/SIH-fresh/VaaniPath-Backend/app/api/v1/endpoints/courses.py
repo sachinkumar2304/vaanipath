@@ -292,6 +292,31 @@ async def get_course_by_id(
         videos = videos_response.data if videos_response.data else []
         total_videos = len(videos)
         total_duration = sum(v.get("duration", 0) or 0 for v in videos)
+
+        # 🚀 NEW: Batch Fetch Subtitles
+        try:
+            video_ids = [v["id"] for v in videos]
+            if video_ids:
+                subtitles_response = supabase.table("translations")\
+                    .select("video_id, language, subtitle_url")\
+                    .in_("video_id", video_ids)\
+                    .eq("status", "completed")\
+                    .execute()
+                
+                subtitles_map = {}
+                if subtitles_response.data:
+                    for item in subtitles_response.data:
+                        if item.get("subtitle_url"):
+                            vid = item["video_id"]
+                            if vid not in subtitles_map:
+                                subtitles_map[vid] = {}
+                            subtitles_map[vid][item["language"]] = item["subtitle_url"]
+                
+                # Attach to videos
+                for video in videos:
+                    video["subtitles"] = subtitles_map.get(video["id"], {})
+        except Exception as e:
+            logger.warning(f"Failed to fetch subtitles for course videos: {e}")
         
         # Manually fetch teacher name
         teacher_id = course.get("teacher_id")
@@ -454,7 +479,34 @@ async def get_course_videos(
         if not response.data:
             return []
         
-        videos = [VideoResponse(**video) for video in response.data]
+        videos_data = response.data
+        
+        # 🚀 NEW: Batch Fetch Subtitles
+        try:
+            video_ids = [v["id"] for v in videos_data]
+            if video_ids:
+                subtitles_response = supabase.table("translations")\
+                    .select("video_id, language, subtitle_url")\
+                    .in_("video_id", video_ids)\
+                    .eq("status", "completed")\
+                    .execute()
+                
+                subtitles_map = {}
+                if subtitles_response.data:
+                    for item in subtitles_response.data:
+                        if item.get("subtitle_url"):
+                            vid = item["video_id"]
+                            if vid not in subtitles_map:
+                                subtitles_map[vid] = {}
+                            subtitles_map[vid][item["language"]] = item["subtitle_url"]
+                
+                # Attach to videos
+                for video in videos_data:
+                    video["subtitles"] = subtitles_map.get(video["id"], {})
+        except Exception as e:
+            logger.warning(f"Failed to fetch subtitles for course videos: {e}")
+
+        videos = [VideoResponse(**video) for video in videos_data]
         return videos
         
     except Exception as e:

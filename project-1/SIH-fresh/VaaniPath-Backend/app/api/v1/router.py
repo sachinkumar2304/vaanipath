@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, admin, teacher, videos, processing, translation, review, quiz, doubts, courses, enrollments
+from app.api.v1.endpoints import auth, admin, teacher, videos, processing, translation, review, quiz, doubts, courses, enrollments, ai
 
 # Create main API router
 api_router = APIRouter()
@@ -16,3 +16,4 @@ api_router.include_router(quiz.router, prefix="/quiz", tags=["quiz"])
 api_router.include_router(doubts.router, prefix="/doubts", tags=["doubts"])
 api_router.include_router(courses.router, prefix="/courses", tags=["courses"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])
+api_router.include_router(ai.router, prefix="/ai", tags=["ai"])

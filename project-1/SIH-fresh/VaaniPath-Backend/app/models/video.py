@@ -33,6 +33,7 @@ class VideoResponse(BaseModel):
     status: str = "processing"
     content_type: Optional[str] = None  # video, audio, or document
     views: int = 0
+    subtitles: Optional[dict] = None  # 🚀 NEW: Subtitles mapping {lang: url}
 
     @field_validator('target_languages', mode='before')
     def parse_target_languages(cls, v):

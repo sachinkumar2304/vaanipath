@@ -8,3 +8,4 @@ rich>=13.7.0
 edge-tts>=6.1.9
 fastapi>=0.115.2
 uvicorn>=0.30.6
+pydub>=0.25.1

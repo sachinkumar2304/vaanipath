@@ -90,3 +90,24 @@ def _discover_ffbin(bin_name: str) -> str:
 
 FFMPEG = _discover_ffbin("ffmpeg")
 FFPROBE = _discover_ffbin("ffprobe")
+
+
+def generate_vtt(chunks: list, output_path: str) -> str:
+    """Generate a WebVTT file from transcript chunks."""
+    def format_time(seconds: float) -> str:
+        h = int(seconds // 3600)
+        m = int((seconds % 3600) // 60)
+        s = int(seconds % 60)
+        ms = int((seconds * 1000) % 1000)
+        return f"{h:02}:{m:02}:{s:02}.{ms:03}"
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("WEBVTT\n\n")
+        for chunk in chunks:
+            start = format_time(chunk["start"])
+            end = format_time(chunk["end"])
+            # Use translated text if available, otherwise original text
+            text = chunk.get("text_translated", chunk.get("text", "")).strip()
+            if text:
+                f.write(f"{start} --> {end}\n{text}\n\n")
+    return output_path
