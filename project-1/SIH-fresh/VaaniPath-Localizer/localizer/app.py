@@ -11,6 +11,10 @@ from .video_splitter import split_video
 from .stt import transcribe
 from .glossary import DEFAULT_GLOSSARY, merge_glossaries, clean_transcript
 from .translation import translate_text
+
+# Only Konkani (Generic) requires Gemini as Google Translate doesn't support it
+# All other Indian languages now use Google Translate (as of 2024)
+GEMINI_PREFERRED_LANGS = {"kok"}  # Konkani (Generic)
 from .culture import apply_cultural_adaptation
 from .tts import tts_synthesize, generate_srt
 from .manifest import build_manifest, load_manifest
@@ -18,6 +22,7 @@ from .rag_client import get_job_context
 from .audio_sync import concatenate_and_stretch
 from pathlib import Path
 from .audio_utils import get_duration
+from .cloudinary_uploader import upload_video_to_cloudinary as cloudinary_upload
 
 
 
@@ -106,7 +111,7 @@ def process_full_video(
     # Extract audio from full video
     audio_path = os.path.join(base_out, "full_audio.wav")
     extract_cmd = [
-        "ffmpeg", "-y", "-i", input_path,
+        FFMPEG, "-y", "-i", input_path,
         "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
         audio_path
     ]
@@ -148,13 +153,24 @@ def process_full_video(
     
     # Time-stretch to match video duration
     video_duration = get_duration(input_path)
+    final_audio_path = os.path.join(base_out, "final_audio.wav")
+    
+    # Use time_stretch_audio from audio_utils
+    from .audio_utils import time_stretch_audio
+    time_stretch_audio(audio_out, video_duration, final_audio_path)
+    
+    # Merge with video (if input is video)
+    final_video_path = os.path.join(base_out, "final_video.mp4")
+    # Note: Merging happens in run_job usually, but here we just return paths
+    # Actually, for single-pass, we might want to return the stretched audio as final result
+    
     chunks_metadata = [{
         "index": 0,
         "start": 0.0,
         "end": video_duration,
         "text_original": text_original,
         "text_translated": text_adapted,
-        "audio_path": audio_out,
+        "audio_path": final_audio_path,
         "srt_path": srt_out,
     }]
     
@@ -182,6 +198,36 @@ def run_job(
             input_path, source, target, job_id, course_id, mode, translation_model, base_out
         )
         
+        # Upload to Cloudinary
+        cloudinary_url = None
+        try:
+            # Determine content type (audio or video)
+            content_type = "audio"  # Default for single-pass as we skip video merge usually
+            upload_path = final_audio
+            
+            # If we had video merging, we would check if final_video exists
+            if final_video and os.path.exists(final_video):
+                content_type = "video"
+                upload_path = final_video
+                
+            if upload_path and os.path.exists(upload_path):
+                logger.info(f"Uploading {content_type} to Cloudinary: {upload_path}")
+                result = cloudinary_upload(
+                    upload_path,
+                    job_id,
+                    target,
+                    content_type=content_type
+                )
+                if result:
+                    cloudinary_url = result  # cloudinary_upload returns URL string directly
+                    logger.info(f"Cloudinary URL ({content_type}): {cloudinary_url}")
+                else:
+                    logger.error("Cloudinary upload returned no result")
+            else:
+                logger.error(f"Upload path does not exist: {upload_path}")
+        except Exception as e:
+            logger.error(f"Cloudinary upload failed: {e}")
+        
         # Build manifest
         manifest = build_manifest(
             job_id=job_id,
@@ -194,6 +240,7 @@ def run_job(
             output_dir=base_out,
             final_audio=final_audio,
             final_video=final_video,
+            cloudinary_url=cloudinary_url,
         )
         
         elapsed = time.time() - start_time
@@ -249,6 +296,13 @@ def run_job(
     video_duration = get_duration(input_path)
     audio_paths = [Path(r["audio_path"]) for r in results]
     final_audio_path = Path(base_out) / "final_audio.wav"
+    
+    if not audio_paths:
+        logger.error("No audio chunks generated! Skipping audio sync.")
+        # Create a dummy silent audio or just fail gracefully?
+        # For now, let's raise an error but with a better message, or return early
+        raise RuntimeError("Localization failed: No audio chunks were generated.")
+        
     concatenate_and_stretch(audio_paths, video_duration, final_audio_path)
 
     # 🎵 Detect if input is audio-only (no video stream)

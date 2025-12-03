@@ -1,6 +1,6 @@
 """
 Cloudinary uploader utility for VaaniPath-Localizer
-Uploads generated videos directly to Cloudinary
+Uploads generated videos directly to Cloudinary with organized folder structure
 """
 import os
 import cloudinary
@@ -36,11 +36,16 @@ def upload_video_to_cloudinary(
     """
     Upload video to Cloudinary and return URL
     
+    Folder Structure:
+    - gyanify/original/  → Original uploaded videos
+    - gyanify/dubbed/    → Dubbed/translated videos
+    - gyanify/audio/     → Audio-only files
+    
     Args:
         file_path: Path to the video file
         video_id: Video ID for organizing
         language: Target language code
-        content_type: 'video', 'audio', or 'document'
+        content_type: 'original', 'video' (dubbed), or 'audio'
     
     Returns:
         Cloudinary URL or None if upload fails
@@ -53,18 +58,36 @@ def upload_video_to_cloudinary(
         
         logger.info(f"📤 Uploading {file_path} to Cloudinary...")
         
+        # Determine folder based on content type
+        if content_type == 'original':
+            # Original videos: gyanify/original/{video_id}
+            folder = "gyanify/original"
+            public_id = f"gyanify/original/{video_id}"
+            tags = ["gyanify", "original", language]
+        elif content_type == 'audio':
+            # Audio files: gyanify/audio/{video_id}_{language}
+            folder = "gyanify/audio"
+            public_id = f"gyanify/audio/{video_id}_{language}"
+            tags = ["gyanify", "audio", language]
+        else:  # dubbed video
+            # Dubbed videos: gyanify/dubbed/{video_id}_{language}
+            folder = "gyanify/dubbed"
+            public_id = f"gyanify/dubbed/{video_id}_{language}"
+            tags = ["gyanify", "dubbed", language]
+        
         # Upload to Cloudinary
         result = cloudinary.uploader.upload(
             file_path,
-            resource_type='video',  # Even for audio
-            public_id=f"dubbed/{content_type}/{video_id}/{language}",
-            folder=f"gyanify/dubbed/{content_type}",
+            resource_type='video',  # Works for both video and audio
+            public_id=public_id,
+            folder=folder,
             overwrite=True,
-            tags=["gyanify", "dubbed", language, content_type]
+            tags=tags
         )
         
         secure_url = result.get('secure_url')
         logger.info(f"✅ Upload successful: {secure_url}")
+        logger.info(f"📁 Folder: {folder}")
         
         return secure_url
         

@@ -19,16 +19,9 @@ def _translate_google(text: str, target_lang: str, style_guide: Optional[str] = 
 
     # Languages not well-supported by Google Translate - use Gemini instead
     GEMINI_PREFERRED_LANGS = {
-        "brx",   # Bodo
-        "doi",   # Dogri
-        "ks",    # Kashmiri
-        "gom",   # Konkani
-        "mai",   # Maithili
-        "mni",   # Manipuri (Meitei)
-        "sat",   # Santali
-        "mwr",   # Marwari
-        "bho",   # Bhojpuri
-        "bgc",   # Haryanvi
+        "kok",   # Konkani (Generic) - Not supported by Google Translate
+        # The following are now supported by Google Translate (as of 2024):
+        # "brx", "doi", "ks", "gom", "mai", "mni", "sat", "mwr", "bho", "bgc"
     }
     
     # Fallback mapping for languages that can use Google Translate with approximation
@@ -228,6 +221,7 @@ def _translate_gemini(
             "doi": "Dogri",
             "ks": "Kashmiri",
             "gom": "Konkani",
+            "kok": "Konkani",
             "mai": "Maithili",
             "mni": "Manipuri (Meitei)",
             "sat": "Santali",

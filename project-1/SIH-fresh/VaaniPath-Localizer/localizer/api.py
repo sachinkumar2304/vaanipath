@@ -399,12 +399,29 @@ async def upload_and_localize(
     cloudinary_url = m.get("cloudinary_url")
     if not cloudinary_url:
         raise HTTPException(status_code=500, detail="Cloudinary URL not found in manifest")
+
+    # Extract Transcripts
+    full_text_original = ""
+    full_text_translated = ""
+    for chunk in m.get("chunks", []):
+        full_text_original += chunk.get("text_original", "") + " "
+        full_text_translated += chunk.get("text_translated", "") + " "
+
+    # Cleanup Local Files
+    try:
+        import shutil
+        job_dir = os.path.dirname(manifest_path)
+        shutil.rmtree(job_dir)
+    except Exception as e:
+        print(f"Cleanup failed for {job}: {e}")
     
     return {
         "cloudinary_url": cloudinary_url,
         "job_id": job,
         "manifest_path": manifest_path,
-        "status": "success"
+        "status": "success",
+        "transcript_original": full_text_original.strip(),
+        "transcript_translated": full_text_translated.strip()
     }
 
 

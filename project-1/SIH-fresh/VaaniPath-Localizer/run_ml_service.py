@@ -8,6 +8,10 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 import uvicorn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 if __name__ == "__main__":
     print("=" * 60)

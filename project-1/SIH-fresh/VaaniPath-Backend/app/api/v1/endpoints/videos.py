@@ -94,10 +94,10 @@ async def upload_video(
             upload_result = cloudinary.uploader.upload(
                 file_content,
                 resource_type=resource_type,
-                public_id=f"videos/{temp_video_id}/{public_id_name}",
-                folder="gyanify/videos",
+                public_id=f"gyanify/original/{temp_video_id}",
+                folder="gyanify/original",
                 overwrite=True,
-                tags=["gyanify", content_type, domain, source_language]
+                tags=["gyanify", "original", content_type, domain, source_language]
             )
             
             if "error" in upload_result:

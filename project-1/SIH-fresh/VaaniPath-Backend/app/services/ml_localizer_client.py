@@ -198,7 +198,9 @@ async def trigger_localization(
             'success': True,
             'job_id': video_id,
             'status': 'completed',
-            'cloudinary_url': result.get('cloudinary_url'),  # 🚀 URL instead of file
+            'cloudinary_url': result.get('cloudinary_url'),
+            'transcript_original': result.get('transcript_original'),
+            'transcript_translated': result.get('transcript_translated'),
             'message': result.get('message', 'Localization complete')
         }
         

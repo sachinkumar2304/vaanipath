@@ -95,7 +95,7 @@ async def process_dubbing_task(video_id: str, language: str, content_type: str =
         if not dubbed_url:
             raise ValueError("ML service did not return Cloudinary URL")
         
-        # 3. Update DB with the Cloudinary URL
+        # 3. Update DB with the Cloudinary URL and Transcripts
         update_data = {
             "status": "completed",
             "updated_at": datetime.utcnow().isoformat()
@@ -107,10 +107,33 @@ async def process_dubbing_task(video_id: str, language: str, content_type: str =
             update_data["audio_url"] = dubbed_url
         elif content_type == "document":
             update_data["dubbed_video_url"] = dubbed_url
+            
+        # Save Translated Text
+        transcript_translated = result.get('transcript_translated')
+        if transcript_translated:
+            update_data["translated_text"] = transcript_translated
         
         supabase.table("translations").update(update_data).eq(
             "video_id", video_id
         ).eq("language", language).execute()
+
+        # Save Original Transcript (if available)
+        transcript_original = result.get('transcript_original')
+        if transcript_original:
+            # Check if transcription exists
+            trans_check = supabase.table("transcriptions").select("id").eq("video_id", video_id).eq("language", source_lang).execute()
+            
+            trans_data = {
+                "video_id": video_id,
+                "language": source_lang,
+                "full_text": transcript_original,
+                "status": "completed"
+            }
+            
+            if trans_check.data:
+                supabase.table("transcriptions").update(trans_data).eq("id", trans_check.data[0]['id']).execute()
+            else:
+                supabase.table("transcriptions").insert(trans_data).execute()
         
     except Exception as e:
         import traceback
