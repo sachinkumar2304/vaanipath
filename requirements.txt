@@ -1,0 +1,50 @@
+# FastAPI and web server
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Database
+sqlalchemy>=2.0.0
+
+# Background tasks (optional - use Celery for production)
+celery>=5.3.0
+redis>=5.0.0
+
+# Speech-to-Text
+# Option 1: Faster Whisper (recommended)
+faster-whisper>=0.9.0
+# Option 2: WhisperX (alternative)
+# whisperx>=3.1.0
+
+# Translation
+# IndicTrans2 - install from source or use alternative
+# indicTrans - requires manual installation from AI4Bharat
+# For now, using a placeholder - install indicTrans separately
+# indicTrans
+
+# Text-to-Speech
+# Note: TTS may have Python version restrictions
+# Install manually if needed: pip install TTS
+# For Python 3.13+, you may need to install from source or use a compatible version
+# TTS>=0.20.0
+# Coqui TTS dependencies
+# torch>=2.0.0
+# torchaudio>=2.0.0
+# Note: Install torch separately based on your system (CPU/GPU)
+# CPU: pip install torch torchaudio
+# GPU: pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# Audio/Video processing
+# FFmpeg must be installed separately on the system
+# No Python package needed, but ensure ffmpeg is in PATH
+
+# Utilities
+# Note: pydantic is usually installed as a dependency of fastapi
+# If you encounter issues, install separately: pip install pydantic
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Additional dependencies
+numpy>=1.24.0
+scipy>=1.10.0
+

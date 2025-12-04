@@ -1,0 +1,26 @@
+# Optional dependencies that may require specific Python versions or manual installation
+
+# Text-to-Speech (Coqui TTS)
+# For Python 3.9-3.11:
+# TTS>=0.20.0
+# For Python 3.12+:
+# Install from source: pip install git+https://github.com/coqui-ai/TTS.git
+# Or use a compatible version
+
+# PyTorch (install based on your system)
+# CPU version:
+# pip install torch torchaudio
+
+# GPU version (CUDA 11.8):
+# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# GPU version (CUDA 12.1):
+# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# IndicTrans2 (install from source)
+# git clone https://github.com/AI4Bharat/IndicTrans2.git
+# cd IndicTrans2
+# pip install -e .
+
+
+
