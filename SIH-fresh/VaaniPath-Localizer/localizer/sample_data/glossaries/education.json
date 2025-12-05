@@ -1,0 +1,19 @@
+{
+  "Student": "Student",
+  "Teacher": "Teacher",
+  "Classroom": "Classroom",
+  "Syllabus": "Syllabus",
+  "Curriculum": "Curriculum",
+  "Examination": "Examination",
+  "Assignment": "Assignment",
+  "Project": "Project",
+  "Internship": "Internship",
+  "Vocational Training": "Vocational Training",
+  "Skill Development": "Skill Development",
+  "Attendance": "Attendance",
+  "Assessment": "Assessment",
+  "Certificate": "Certificate",
+  "Practical": "Practical",
+  "Workshop": "Workshop",
+  "Laboratory": "Laboratory"
+}

@@ -1,0 +1,47 @@
+
+
+@router.delete("/content/{video_id}/{language}")
+async def cancel_dubbing(
+    video_id: str,
+    language: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    🛑 **[STUDENT] Cancel Dubbing/Translation**
+    
+    Cancel an in-progress dubbing task
+    """
+    try:
+        if not supabase:
+            raise HTTPException(status_code=503, detail="Database not configured")
+        
+        # Check if translation exists and is processing
+        translation = supabase.table("translations").select("status").eq(
+            "video_id", video_id
+        ).eq("language", language).execute()
+        
+        if not translation.data:
+            raise HTTPException(status_code=404, detail="Dubbing task not found")
+        
+        status = translation.data[0].get("status")
+        
+        if status == "completed":
+            raise HTTPException(status_code=400, detail="Cannot cancel completed dubbing")
+        
+        # Update status to cancelled
+        supabase.table("translations").update({
+            "status": "cancelled",
+            "error_message": "Cancelled by user",
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("video_id", video_id).eq("language", language).execute()
+        
+        return {
+            "message": "Dubbing cancelled successfully",
+            "video_id": video_id,
+            "language": language
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

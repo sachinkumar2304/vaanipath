@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+
+# Localizer artifacts
+localizer/output/
+localizer/uploads/
+localizer/sample_data/voice_map.json
+
+# Media files (unless part of repo sample)
+*.mp4
+*.mp3
+*.wav
+*.m4a
+!localizer/sample_data/*.mp4
+
+# IDE
+.vscode/
+.idea/
+*.swp

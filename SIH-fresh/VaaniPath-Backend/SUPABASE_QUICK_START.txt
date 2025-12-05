@@ -1,0 +1,129 @@
+🚀 GYANIFY SUPABASE SETUP - QUICK START
+
+═══════════════════════════════════════════════════════════════
+
+STEP 1: CREATE SUPABASE PROJECT (5 min)
+───────────────────────────────────────
+1. Go to: https://supabase.com
+2. Sign up / Login
+3. Create new project: "gyanify"
+4. Region: Asia Pacific (Singapore)
+5. Wait for project ready
+
+STEP 2: GET CREDENTIALS (2 min)
+───────────────────────────────
+1. Settings → API
+2. Copy:
+   - Project URL → SUPABASE_URL
+   - anon public → SUPABASE_KEY
+   - service_role → SUPABASE_SERVICE_KEY
+
+STEP 3: UPDATE .ENV FILE (2 min)
+────────────────────────────────
+Open: d:\backend\.env
+
+Add these lines:
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+STEP 4: CREATE DATABASE SCHEMA (5 min)
+──────────────────────────────────────
+1. Supabase → SQL Editor
+2. New Query
+3. Copy all from: d:\backend\database\schema.sql
+4. Paste in SQL Editor
+5. Click RUN
+6. Wait for ✅ success
+
+STEP 5: VERIFY TABLES (1 min)
+─────────────────────────────
+Supabase → Table Editor
+
+Check these 11 tables exist:
+✅ users
+✅ videos
+✅ transcriptions
+✅ translations
+✅ subtitles
+✅ quiz_questions
+✅ quiz_responses
+✅ enrollments
+✅ reviews
+✅ glossary_terms
+✅ processing_jobs
+
+STEP 6: TEST BACKEND (2 min)
+────────────────────────────
+Terminal:
+  cd d:\backend
+  py -3.12 -m uvicorn app.main:app --reload
+
+Check logs for:
+  ✅ Supabase client initialized successfully
+
+STEP 7: TEST UPLOAD (3 min)
+───────────────────────────
+Browser: http://localhost:8000/docs
+
+Try POST /api/v1/videos/upload
+- Upload test video
+- Check response has file_url
+
+STEP 8: VERIFY IN SUPABASE (1 min)
+──────────────────────────────────
+Supabase → Table Editor → videos
+
+You should see:
+- Your uploaded video
+- file_url (Cloudinary)
+- duration
+- status: "uploaded"
+
+═══════════════════════════════════════════════════════════════
+
+✅ SETUP COMPLETE!
+
+Current Status:
+✅ Cloudinary: Storing video files
+✅ Supabase: Storing metadata
+✅ Backend: Running
+✅ Database: Ready
+
+Data Flow:
+Video Upload → Cloudinary (file) → Supabase (metadata)
+
+═══════════════════════════════════════════════════════════════
+
+NEXT STEPS:
+1. Implement transcription (Whisper)
+2. Implement translation (IndianLLM)
+3. Implement TTS (Text-to-Speech)
+4. Setup Celery task queue
+
+═══════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING:
+
+Q: "Supabase credentials not found"
+A: Check .env file, restart backend
+
+Q: "Connection refused"
+A: Check internet, verify Supabase project active
+
+Q: "Table already exists"
+A: Normal! schema.sql uses IF NOT EXISTS
+
+Q: Video not in Supabase
+A: Check backend logs, verify Cloudinary upload
+
+═══════════════════════════════════════════════════════════════
+
+USEFUL LINKS:
+- Supabase: https://supabase.com/dashboard
+- Cloudinary: https://cloudinary.com/console
+- Backend API: http://localhost:8000/docs
+- Schema: d:\backend\database\schema.sql
+- Guide: d:\backend\SUPABASE_SETUP.md
+
+═══════════════════════════════════════════════════════════════
