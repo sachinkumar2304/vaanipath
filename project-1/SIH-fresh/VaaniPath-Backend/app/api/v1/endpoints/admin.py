@@ -341,3 +341,86 @@ async def cancel_job(
         "status": "cancelled"
     }
 
+
+@router.delete("/tutors/{tutor_id}", status_code=status.HTTP_200_OK)
+async def delete_tutor(
+    tutor_id: str,
+    current_user: dict = Depends(get_current_admin)
+):
+    """
+    Delete a tutor account and all associated data (Admin only)
+    
+    This will CASCADE delete:
+    - All courses created by the tutor
+    - All videos uploaded by the tutor
+    - All enrollments related to those courses/videos
+    - All transcriptions, translations, subtitles
+    - All quiz questions and responses
+    - All reviews and processing jobs
+    
+    This action is PERMANENT and cannot be undone.
+    """
+    try:
+        if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database not configured"
+            )
+        
+        # Prevent admin from deleting themselves
+        if tutor_id == current_user.get("id"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot delete your own account"
+            )
+        
+        # Check if user exists and is a teacher
+        user_response = supabase.table("users").select("id, email, full_name, is_teacher").eq("id", tutor_id).execute()
+        
+        if not user_response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Tutor not found"
+            )
+        
+        user = user_response.data[0]
+        
+        if not user.get("is_teacher"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User is not a tutor"
+            )
+        
+        # Get counts of data that will be deleted (for logging/response)
+        courses_response = supabase.table("courses").select("id", count="exact").eq("teacher_id", tutor_id).execute()
+        courses_count = courses_response.count if courses_response.count is not None else 0
+        
+        videos_response = supabase.table("videos").select("id", count="exact").eq("uploaded_by", tutor_id).execute()
+        videos_count = videos_response.count if videos_response.count is not None else 0
+        
+        # Delete the user - CASCADE will handle all related data
+        supabase.table("users").delete().eq("id", tutor_id).execute()
+        
+        logger.info(f"✅ Deleted tutor {user['email']} (ID: {tutor_id})")
+        logger.info(f"   - Courses deleted: {courses_count}")
+        logger.info(f"   - Videos deleted: {videos_count}")
+        
+        return {
+            "message": "Tutor deleted successfully",
+            "tutor_email": user["email"],
+            "tutor_name": user["full_name"],
+            "deleted_resources": {
+                "courses": courses_count,
+                "videos": videos_count
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error deleting tutor: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete tutor: {str(e)}"
+        )
+

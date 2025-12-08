@@ -63,6 +63,21 @@ async def signup(user: UserCreate):
                     detail="Failed to create user"
                 )
             
+            # Award 100 GyanPoints on Signup
+            try:
+                from app.features.community.services.gyan_points_service import GyanPointsService
+                created_user_id = response.data[0]['id']
+                await GyanPointsService.add_points(
+                    user_id=created_user_id,
+                    points=100,
+                    source="signup_bonus",
+                    description="Welcome Bonus: 100 GyanPoints for joining VaaniPath!",
+                    reference_id=None
+                )
+            except Exception as e:
+                logger.error(f"Failed to award signup points: {e}")
+                # Don't fail signup if points fail, but log it.
+
             logger.info(f"✅ User created: {user.email}")
             return response.data[0]
         except Exception as db_error:

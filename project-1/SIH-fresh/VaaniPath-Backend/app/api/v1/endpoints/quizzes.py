@@ -121,6 +121,38 @@ async def submit_quiz(
         score_percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
         passed = score_percentage >= 60  # 60% passing threshold
         
+        # Award GyanPoints if passed
+        if passed:
+            try:
+                from app.features.community.services.gyan_points_service import GyanPointsService
+                # Check if points already awarded for this video quiz
+                # We can check transaction history or use a specific DB constraint. 
+                # For simplicity, checking existing transaction for this video_id in description or reference logic would be ideal if reference_id supported string (video_id is string?).
+                # Since reference_id is UUID in service, and video_id is string/uuid?, let's check carefully.
+                # Assuming video_id is a UUID string.
+                
+                # Check directly in transactions table if we can't trust service wrapper for uniqueness check
+                # But let's try to be clean.
+                
+                # Verify if we already gave points for this video_id
+                history = await GyanPointsService.get_history(current_user["id"])
+                already_awarded = any(
+                    t['transaction_type'] == 'course_quiz_reward' and 
+                    t['description'].endswith(f"Video {video_id}") 
+                    for t in history
+                )
+                
+                if not already_awarded:
+                    await GyanPointsService.add_points(
+                        user_id=current_user["id"],
+                        points=50,
+                        source="course_quiz_reward",
+                        description=f"Quiz Completion Reward: Video {video_id}",
+                        reference_id=None # video_id might not be UUID, safe to leave None or try convert if sure.
+                    )
+            except Exception as e:
+                logger.error(f"Failed to award quiz points: {e}")
+
         return {
             "total_questions": total_questions,
             "correct_answers": correct_answers,

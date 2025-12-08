@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, LayoutDashboard, Users, GraduationCap, Video } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, GraduationCap, BookOpen } from 'lucide-react';
 
 interface AdminLayoutProps {
     children: ReactNode;
@@ -17,7 +17,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Tutors', href: '/admin/tutors', icon: GraduationCap },
         { name: 'Students', href: '/admin/students', icon: Users },
-        { name: 'Videos', href: '/admin/videos', icon: Video },
+        { name: 'Courses', href: '/admin/courses', icon: BookOpen },
     ];
 
     const isActive = (path: string) => location.pathname === path;

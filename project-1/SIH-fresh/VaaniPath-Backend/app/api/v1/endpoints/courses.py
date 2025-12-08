@@ -401,9 +401,9 @@ async def delete_course(
     course_id: str,
     current_user: dict = Depends(get_current_teacher)
 ):
-    """Delete course (Teacher only - own courses)"""
+    """Delete course (Teacher can delete own courses, Admin can delete any course)"""
     try:
-        # Check if course exists and belongs to teacher
+        # Check if course exists
         course_response = supabase.table("courses")\
             .select("*")\
             .eq("id", course_id)\
@@ -416,7 +416,12 @@ async def delete_course(
             )
         
         course = course_response.data[0]
-        if course["teacher_id"] != current_user["id"]:
+        
+        # Check permission: Admin can delete any course, Teacher can only delete own courses
+        is_admin = current_user.get("is_admin", False)
+        is_owner = course["teacher_id"] == current_user["id"]
+        
+        if not is_admin and not is_owner:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only delete your own courses"
@@ -424,6 +429,8 @@ async def delete_course(
         
         # Delete course (cascade will delete videos and enrollments)
         supabase.table("courses").delete().eq("id", course_id).execute()
+        
+        logger.info(f"✅ Course deleted: {course['title']} (ID: {course_id}) by {'admin' if is_admin else 'teacher'}")
         
         return None
         

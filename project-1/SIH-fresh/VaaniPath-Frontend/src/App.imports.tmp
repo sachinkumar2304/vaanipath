@@ -1,0 +1,2 @@
+import CompetitionCreatePage from './features/community/pages/CompetitionCreatePage';
+import CompetitionPlayPage from './features/community/pages/CompetitionPlayPage';

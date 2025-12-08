@@ -52,7 +52,8 @@ async def enroll_in_course(
         
         course = course_response.data[0]
         
-        # Check if already enrolled
+        # Check if already enrolled (check both student_id/course_id AND user_id/video_id)
+        # First check by course_id and student_id
         existing_enrollment = supabase.table("enrollments")\
             .select("*")\
             .eq("student_id", current_user["id"])\
@@ -64,7 +65,7 @@ async def enroll_in_course(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Already enrolled in this course"
             )
-        
+
         # Get first video ID for the course (required by DB constraint)
         first_video_response = supabase.table("videos")\
             .select("id")\
@@ -74,6 +75,23 @@ async def enroll_in_course(
             .execute()
             
         first_video_id = first_video_response.data[0]["id"] if first_video_response.data else None
+        
+        # Check for existing enrollment by user_id and video_id (to prevent 500 error)
+        if first_video_id:
+            existing_by_video = supabase.table("enrollments")\
+                .select("*")\
+                .eq("user_id", current_user["id"])\
+                .eq("video_id", first_video_id)\
+                .execute()
+                
+            if existing_by_video.data:
+                # If found, it means they are already enrolled, just return the existing one
+                # or raise 400. Let's return the existing one to be idempotent/friendly
+                # But to be consistent with the other check, let's raise 400
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Already enrolled in this course (verified by video)"
+                )
         
         # Create enrollment
         enrollment_id = str(uuid.uuid4())
@@ -87,7 +105,16 @@ async def enroll_in_course(
             "progress": {}
         }
         
-        response = supabase.table("enrollments").insert(enrollment_data).execute()
+        try:
+            response = supabase.table("enrollments").insert(enrollment_data).execute()
+        except Exception as e:
+            error_str = str(e).lower()
+            if "duplicate key" in error_str or "unique constraint" in error_str:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Already enrolled in this course"
+                )
+            raise e
         
         if not response.data:
             raise HTTPException(
@@ -233,11 +260,20 @@ async def get_course_progress(
     """Get progress for a specific course"""
     try:
         # Get enrollment without join
+        # Try with student_id first
         response = supabase.table("enrollments")\
             .select("*")\
             .eq("student_id", current_user["id"])\
             .eq("course_id", course_id)\
             .execute()
+        
+        # Fallback to user_id if not found
+        if not response.data:
+            response = supabase.table("enrollments")\
+                .select("*")\
+                .eq("user_id", current_user["id"])\
+                .eq("course_id", course_id)\
+                .execute()
         
         if not response.data:
             raise HTTPException(
@@ -316,11 +352,20 @@ async def update_video_progress(
     """Update progress for a video in a course"""
     try:
         # Get enrollment
+        # Try with student_id first
         enrollment_response = supabase.table("enrollments")\
             .select("*")\
             .eq("student_id", current_user["id"])\
             .eq("course_id", course_id)\
             .execute()
+        
+        # Fallback to user_id if not found
+        if not enrollment_response.data:
+            enrollment_response = supabase.table("enrollments")\
+                .select("*")\
+                .eq("user_id", current_user["id"])\
+                .eq("course_id", course_id)\
+                .execute()
         
         if not enrollment_response.data:
             raise HTTPException(
@@ -411,11 +456,20 @@ async def unenroll_from_course(
     """Unenroll from a course"""
     try:
         # Check if enrolled
+        # Try with student_id first
         enrollment_response = supabase.table("enrollments")\
             .select("*")\
             .eq("student_id", current_user["id"])\
             .eq("course_id", course_id)\
             .execute()
+        
+        # Fallback to user_id if not found
+        if not enrollment_response.data:
+            enrollment_response = supabase.table("enrollments")\
+                .select("*")\
+                .eq("user_id", current_user["id"])\
+                .eq("course_id", course_id)\
+                .execute()
         
         if not enrollment_response.data:
             raise HTTPException(
@@ -426,8 +480,7 @@ async def unenroll_from_course(
         # Delete enrollment
         supabase.table("enrollments")\
             .delete()\
-            .eq("student_id", current_user["id"])\
-            .eq("course_id", course_id)\
+            .eq("id", enrollment_response.data[0]["id"])\
             .execute()
         
         return None

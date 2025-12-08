@@ -12,12 +12,13 @@ dist/
 build/
 
 # Environment variables
-.env
-.env.local
+# .env
+# .env.local
 
 # ML Models (too large for git)
 models/
 !app/models/
+!app/features/
 *.pth
 *.pt
 *.bin

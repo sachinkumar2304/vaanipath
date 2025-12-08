@@ -3,7 +3,7 @@ import { GraduationCap, Menu, X, LogOut, Trophy, User, Settings } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
@@ -38,9 +38,16 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
     navigate('/landingpage');
   };
 
-  // TODO: Fetch student points from backend
-  // GET /api/students/:studentId/points
-  const studentPoints = 850;
+
+  const [studentPoints, setStudentPoints] = useState(0);
+
+  useEffect(() => {
+    if (isAuthenticated && userType === 'student') {
+        import('../features/community/services/communityApi').then(({ getGyanPoints }) => {
+            getGyanPoints().then(data => setStudentPoints(data.total_points)).catch(console.error);
+        });
+    }
+  }, [isAuthenticated, userType]);
 
   const getNavLinks = () => {
     if (!isAuthenticated) {
@@ -56,7 +63,7 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
         { path: '/homepage', label: t('common.browseCourses') },
         { path: '/enrolled', label: t('common.myCourses') },
         { path: '/doubts', label: t('common.askDoubts') },
-        { path: '/community', label: t('common.community') },
+        { path: '/communities', label: 'Communities' },
         { path: '/rewards', label: t('common.rewards') },
         { path: '/roadmap', label: t('common.aiRoadmap') },
         { path: '/podcast', label: t('common.podcast') },
@@ -71,6 +78,7 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
         { path: '/teacher/upload', label: t('common.uploadContent') },
         { path: '/teacher/quizzes', label: t('common.createQuiz') },
         { path: '/teacher/doubts', label: t('common.studentDoubts') },
+        { path: '/communities', label: 'Communities' },
       ];
     }
 
@@ -144,18 +152,18 @@ export const Header = ({ isAuthenticated = false, userType, userName = "User", o
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="mr-2 h-4 w-4" />
-                    <span>{t('common.profile')}</span>
+                    <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>{t('common.settings')}</span>
+                    <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>{t('common.logout')}</span>
+                    <span>{t('header.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

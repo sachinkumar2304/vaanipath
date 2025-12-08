@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { listTutors, createTutor, type Tutor, type TutorCreate, type TutorResponse } from '@/services/admin';
+import { listTutors, createTutor, deleteTutor, type Tutor, type TutorCreate, type TutorResponse } from '@/services/admin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { GraduationCap, UserPlus, Copy, Search } from 'lucide-react';
+import { GraduationCap, UserPlus, Copy, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 
@@ -26,6 +26,9 @@ export default function TutorsList() {
         password: '',
         full_name: ''
     });
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [tutorToDelete, setTutorToDelete] = useState<Tutor | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (!isAdmin) {
@@ -96,6 +99,30 @@ export default function TutorsList() {
                 title: 'Copied!',
                 description: 'Credentials copied to clipboard'
             });
+        }
+    };
+
+    const handleDeleteTutor = async () => {
+        if (!tutorToDelete) return;
+        
+        try {
+            setIsDeleting(true);
+            const result = await deleteTutor(tutorToDelete.id);
+            toast({
+                title: 'Tutor Deleted',
+                description: `${result.tutor_name} and all associated data have been permanently deleted. Courses: ${result.deleted_resources.courses}, Videos: ${result.deleted_resources.videos}`,
+            });
+            loadTutors(); // Refresh the list
+            setDeleteDialogOpen(false);
+            setTutorToDelete(null);
+        } catch (error: any) {
+            toast({
+                title: 'Error',
+                description: error.response?.data?.detail || 'Failed to delete tutor',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -235,8 +262,20 @@ export default function TutorsList() {
                                             <p className="font-medium">{tutor.full_name}</p>
                                             <p className="text-sm text-muted-foreground">{tutor.email}</p>
                                         </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            Joined: {new Date(tutor.created_at).toLocaleDateString()}
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-sm text-muted-foreground">
+                                                Joined: {new Date(tutor.created_at).toLocaleDateString()}
+                                            </div>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setTutorToDelete(tutor);
+                                                    setDeleteDialogOpen(true);
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </div>
                                 ))}
@@ -244,6 +283,47 @@ export default function TutorsList() {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Tutor Account</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete <strong>{tutorToDelete?.full_name}</strong>?
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 my-4">
+                            <p className="text-sm font-semibold text-destructive mb-2">⚠️ Warning: This action cannot be undone!</p>
+                            <p className="text-sm text-muted-foreground">This will permanently delete:</p>
+                            <ul className="text-sm text-muted-foreground list-disc list-inside mt-2 space-y-1">
+                                <li>The tutor account</li>
+                                <li>All courses created by this tutor</li>
+                                <li>All videos uploaded by this tutor</li>
+                                <li>All enrollments, quizzes, and related data</li>
+                            </ul>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setDeleteDialogOpen(false);
+                                    setTutorToDelete(null);
+                                }}
+                                disabled={isDeleting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDeleteTutor}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? 'Deleting...' : 'Delete Tutor'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AdminLayout>
     );

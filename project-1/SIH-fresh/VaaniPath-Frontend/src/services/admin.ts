@@ -73,3 +73,14 @@ export const toggleTeacherStatus = async (userId: string, isTeacher: boolean) =>
     });
     return response.data;
 };
+
+// Delete tutor
+export const deleteTutor = async (tutorId: string): Promise<{ message: string; tutor_email: string; tutor_name: string; deleted_resources: { courses: number; videos: number } }> => {
+    const response = await api.delete(`/admin/tutors/${tutorId}`);
+    return response.data;
+};
+
+// Delete course (admin can delete any course)
+export const deleteCourse = async (courseId: string): Promise<void> => {
+    await api.delete(`/courses/${courseId}`);
+};

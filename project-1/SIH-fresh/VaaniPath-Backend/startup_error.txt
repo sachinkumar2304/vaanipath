@@ -1,0 +1,144 @@
+Traceback (most recent call last):
+  File "C:\Program Files\Python310\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Program Files\Python310\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "C:\Users\pinch\OneDrive\Desktop\VaaniPathPrototype\vaanipath\project-1\SIH-fresh\VaaniPath-Backend\app\main.py", line 4, in <module>
+    from app.api.v1.router import api_router
+  File "C:\Users\pinch\OneDrive\Desktop\VaaniPathPrototype\vaanipath\project-1\SIH-fresh\VaaniPath-Backend\app\api\v1\router.py", line 3, in <module>
+    from app.features.community.routes import communities, posts, competitions
+  File "C:\Users\pinch\OneDrive\Desktop\VaaniPathPrototype\vaanipath\project-1\SIH-fresh\VaaniPath-Backend\app\features\community\routes\communities.py", line 11, in <module>
+    from app.features.community.services.community_service import CommunityService
+  File "C:\Users\pinch\OneDrive\Desktop\VaaniPathPrototype\vaanipath\project-1\SIH-fresh\VaaniPath-Backend\app\features\community\services\community_service.py", line 8, in <module>
+    from app.features.community.database import community_db
+  File "C:\Users\pinch\OneDrive\Desktop\VaaniPathPrototype\vaanipath\project-1\SIH-fresh\VaaniPath-Backend\app\features\community\database.py", line 31, in <module>
+    community_db = get_community_db()
+  File "C:\Users\pinch\OneDrive\Desktop\VaaniPathPrototype\vaanipath\project-1\SIH-fresh\VaaniPath-Backend\app\features\community\database.py", line 20, in get_community_db
+    settings = get_community_settings()
+  File "C:\Users\pinch\OneDrive\Desktop\VaaniPathPrototype\vaanipath\project-1\SIH-fresh\VaaniPath-Backend\app\features\community\config.py", line 21, in get_community_settings
+    return CommunitySettings()
+  File "C:\Users\pinch\AppData\Roaming\Python\Python310\site-packages\pydantic_settings\main.py", line 194, in __init__
+    super().__init__(
+  File "C:\Users\pinch\AppData\Roaming\Python\Python310\site-packages\pydantic\main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 40 validation errors for CommunitySettings
+APP_NAME
+  Extra inputs are not permitted [type=extra_forbidden, input_value='Gyanify_Localization_Engine', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+APP_VERSION
+  Extra inputs are not permitted [type=extra_forbidden, input_value='1.0.0', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+DEBUG
+  Extra inputs are not permitted [type=extra_forbidden, input_value='True', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+HOST
+  Extra inputs are not permitted [type=extra_forbidden, input_value='0.0.0.0', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PORT
+  Extra inputs are not permitted [type=extra_forbidden, input_value='8000', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+SUPABASE_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='https://lzsxvqzbtwetemortvua.supabase.co', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+SUPABASE_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='eyJhbGciOiJIUzI1NiIsInR5...mkwVnZ-O0DjzrRStaTsX1GQ', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+SUPABASE_SERVICE_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='eyJhbGciOiJIUzI1NiIsInR5...uHNKw1ZiJL5Qs27PYh0KoSE', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+STORAGE_TYPE
+  Extra inputs are not permitted [type=extra_forbidden, input_value='cloudinary', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+REDIS_HOST
+  Extra inputs are not permitted [type=extra_forbidden, input_value='localhost', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+REDIS_PORT
+  Extra inputs are not permitted [type=extra_forbidden, input_value='6379', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+REDIS_DB
+  Extra inputs are not permitted [type=extra_forbidden, input_value='0', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='dev-secret-key-change-th...use-openssl-rand-hex-32', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ALGORITHM
+  Extra inputs are not permitted [type=extra_forbidden, input_value='HS256', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ACCESS_TOKEN_EXPIRE_MINUTES
+  Extra inputs are not permitted [type=extra_forbidden, input_value='30', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+MAX_UPLOAD_SIZE
+  Extra inputs are not permitted [type=extra_forbidden, input_value='524288000', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ALLOWED_VIDEO_FORMATS
+  Extra inputs are not permitted [type=extra_forbidden, input_value='mp4,avi,mov,mkv,webm', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ALLOWED_AUDIO_FORMATS
+  Extra inputs are not permitted [type=extra_forbidden, input_value='mp3,wav,m4a,aac', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ALLOWED_DOC_FORMATS
+  Extra inputs are not permitted [type=extra_forbidden, input_value='pdf,doc,docx,ppt,pptx,txt', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+WHISPER_MODEL_SIZE
+  Extra inputs are not permitted [type=extra_forbidden, input_value='medium', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+TRANSLATION_MODEL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='ai4bharat/indictrans2-en-indic-1B', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+TTS_MODEL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='tts_models/multilingual/multi-dataset/your_tts', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+USE_GPU
+  Extra inputs are not permitted [type=extra_forbidden, input_value='True', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+MAX_CONCURRENT_JOBS
+  Extra inputs are not permitted [type=extra_forbidden, input_value='3', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PROCESSING_TIMEOUT
+  Extra inputs are not permitted [type=extra_forbidden, input_value='3600', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+SUPPORTED_LANGUAGES
+  Extra inputs are not permitted [type=extra_forbidden, input_value='hi,ta,te,bn,mr,gu,kn,ml,pa,or,as,ur', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+QUESTIONS_PER_VIDEO
+  Extra inputs are not permitted [type=extra_forbidden, input_value='5', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+QUESTION_DIFFICULTY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='medium', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+UPLOAD_DIR
+  Extra inputs are not permitted [type=extra_forbidden, input_value='storage/uploads', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PROCESSING_DIR
+  Extra inputs are not permitted [type=extra_forbidden, input_value='storage/processing', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+OUTPUT_DIR
+  Extra inputs are not permitted [type=extra_forbidden, input_value='storage/outputs', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+TEMP_DIR
+  Extra inputs are not permitted [type=extra_forbidden, input_value='storage/temp', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+LOG_LEVEL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='INFO', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+LOG_FILE
+  Extra inputs are not permitted [type=extra_forbidden, input_value='logs/app.log', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+CELERY_BROKER_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='redis://localhost:6379/0', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+CELERY_RESULT_BACKEND
+  Extra inputs are not permitted [type=extra_forbidden, input_value='redis://localhost:6379/0', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+CLOUDINARY_CLOUD_NAME
+  Extra inputs are not permitted [type=extra_forbidden, input_value='dokvotjx6', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+CLOUDINARY_API_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='383549155344394', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+CLOUDINARY_API_SECRET
+  Extra inputs are not permitted [type=extra_forbidden, input_value='B1PHM1CdYdvr5hOhEPM8flNJ-EU', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ML_SERVICE_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:8001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden

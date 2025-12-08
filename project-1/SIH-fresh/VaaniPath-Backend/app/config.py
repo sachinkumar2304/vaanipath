@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from typing import List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -13,7 +13,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings(BaseSettings):
     """Application settings"""
-    
     # App Configuration
     APP_NAME: str = os.getenv("APP_NAME", "Gyanify Localization Engine")
     APP_VERSION: str = os.getenv("APP_VERSION", "1.0.0")
@@ -25,6 +24,10 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
     SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
+    
+    # Community Supabase (Separate Database)
+    COMMUNITY_SUPABASE_URL: str = os.getenv("COMMUNITY_SUPABASE_URL", "")
+    COMMUNITY_SUPABASE_KEY: str = os.getenv("COMMUNITY_SUPABASE_KEY", "")
     
     # Storage Configuration - Cloudinary (Primary)
     STORAGE_TYPE: str = os.getenv("STORAGE_TYPE", "cloudinary")
@@ -138,6 +141,9 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"
+    
+
 
 
 # Initialize settings

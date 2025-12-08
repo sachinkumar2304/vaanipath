@@ -21,7 +21,6 @@ import CourseDetail from "./pages/CourseDetail";
 import StudentQuizzes from "./pages/StudentQuizzes";
 import StudentCertificate from "./pages/StudentCertificate";
 import StudentRewards from "./pages/StudentRewards";
-import ChatCommunity from "./pages/ChatCommunity";
 import AIRoadmap from "./pages/AIRoadmap";
 import StudentFeedback from "./pages/StudentFeedback";
 import PodcastPage from "./pages/PodcastPage";
@@ -36,11 +35,19 @@ import TeacherAnalytics from "./pages/TeacherAnalytics";
 import AdminDashboard from "./pages/AdminDashboard";
 import TutorsList from "./pages/TutorsList";
 import StudentsList from "./pages/StudentsList";
+import AdminCourses from "./pages/AdminCourses";
 import BrowseCourses from "./pages/BrowseCourses";
 import MyCourses from "./pages/MyCourses";
 import CoursePlayer from "./pages/CoursePlayer";
 import NotFound from "./pages/NotFound";
 import { Settings } from "./pages/Settings";
+import CommunitiesPage from "./features/community/pages/CommunitiesPage";
+import CommunityDetailPage from "./features/community/pages/CommunityDetailPage";
+import CompetitionDetailPage from './features/community/pages/CompetitionDetailPage';
+import CompetitionCreatePage from './features/community/pages/CompetitionCreatePage';
+import CompetitionPlayPage from './features/community/pages/CompetitionPlayPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 
 const queryClient = new QueryClient();
 
@@ -79,6 +86,7 @@ const AppContent = () => {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/tutors" element={<TutorsList />} />
           <Route path="/admin/students" element={<StudentsList />} />
+          <Route path="/admin/courses" element={<AdminCourses />} />
 
           {/* Student Routes */}
           <Route path="/homepage" element={<StudentDashboard />} />
@@ -89,7 +97,6 @@ const AppContent = () => {
           <Route path="/quiz/:courseId" element={<StudentQuizzes />} />
           <Route path="/certificate/:courseId" element={<StudentCertificate />} />
           <Route path="/rewards" element={<StudentRewards />} />
-          <Route path="/community" element={<ChatCommunity />} />
           <Route path="/roadmap" element={<AIRoadmap />} />
           <Route path="/feedback" element={<StudentFeedback />} />
           <Route path="/podcast" element={<PodcastPage />} />
@@ -97,6 +104,15 @@ const AppContent = () => {
           <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/course-player/:courseId" element={<CoursePlayer />} />
           <Route path="/settings" element={<Settings />} />
+          
+          {/* New Pages */}
+          <Route path="/communities" element={<CommunitiesPage />} />
+          <Route path="/community/:communityId" element={<CommunityDetailPage />} />
+          <Route path="/community/:communityId/create-competition" element={<CompetitionCreatePage />} />
+          <Route path="/community/competition/:competitionId" element={<CompetitionDetailPage />} />
+          <Route path="/community/competition/:competitionId/play" element={<CompetitionPlayPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings-page" element={<SettingsPage />} />
 
           {/* Teacher Routes */}
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />

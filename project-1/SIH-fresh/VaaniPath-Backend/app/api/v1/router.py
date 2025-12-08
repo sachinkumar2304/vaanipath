@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import auth, admin, teacher, videos, processing, translation, review, quiz, doubts, courses, enrollments
+from app.features.community.routes import communities, posts, competitions, gyan_points
 
 # Create main API router
 api_router = APIRouter()
@@ -16,3 +17,9 @@ api_router.include_router(quiz.router, prefix="/quiz", tags=["quiz"])
 api_router.include_router(doubts.router, prefix="/doubts", tags=["doubts"])
 api_router.include_router(courses.router, prefix="/courses", tags=["courses"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])
+
+# Community Feature Routes
+api_router.include_router(communities.router, prefix="/community", tags=["community"])
+api_router.include_router(posts.router, prefix="/community", tags=["community"])
+api_router.include_router(competitions.router, prefix="/community", tags=["community"])
+api_router.include_router(gyan_points.router, prefix="/community", tags=["community"])
