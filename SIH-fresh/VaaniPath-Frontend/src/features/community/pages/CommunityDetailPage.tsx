@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Header } from '@/components/Header';
@@ -22,7 +22,8 @@ import {
     Heart, 
     Send,
     Image as ImageIcon,
-    Loader2
+    Loader2,
+    X
 } from 'lucide-react';
 import { 
     getCommunity, 
@@ -30,7 +31,8 @@ import {
     createPost, 
     toggleLike,
     createReply,
-    getReplies
+    getReplies,
+    uploadPostMedia
 } from '../services/communityApi';
 import { CompetitionList } from '../components/CompetitionList';
 import type { Community, Post, Reply } from '../types';
@@ -41,12 +43,15 @@ export default function CommunityDetailPage() {
     const { user, isTeacher } = useAuth();
     const { toast } = useToast();
     const navigate = useNavigate();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [community, setCommunity] = useState<Community | null>(null);
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPostsLoading, setIsPostsLoading] = useState(true);
     const [newPostContent, setNewPostContent] = useState('');
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('discussions');
 
     useEffect(() => {
@@ -86,17 +91,48 @@ export default function CommunityDetailPage() {
         }
     };
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setSelectedImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setSelectedImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     const handleCreatePost = async () => {
-        if (!newPostContent.trim() || !communityId) return;
+        if (!newPostContent.trim() && !selectedImage) return;
+        if (!communityId) return;
 
         try {
+            let mediaUrls: string[] = [];
+            if (selectedImage) {
+                const uploadRes = await uploadPostMedia(selectedImage);
+                if (uploadRes.url) {
+                    mediaUrls.push(uploadRes.url);
+                }
+            }
+
             const newPost = await createPost({
                 community_id: communityId,
                 content: newPostContent,
-                post_type: 'text'
+                post_type: 'text',
+                media_urls: mediaUrls
             });
             setPosts([newPost, ...posts]);
             setNewPostContent('');
+            removeImage();
             toast({
                 title: 'Success',
                 description: 'Post created successfully'
@@ -175,7 +211,11 @@ export default function CommunityDetailPage() {
                                     Share
                                 </Button>
                                 {isTeacher && user?.id === community.created_by && (
-                                    <Button variant="secondary" className="flex-1 md:flex-none">
+                                    <Button 
+                                        variant="secondary" 
+                                        className="flex-1 md:flex-none"
+                                        onClick={() => toast({ title: "Coming Soon", description: "Community management features are coming soon!" })}
+                                    >
                                         Manage
                                     </Button>
                                 )}
@@ -205,7 +245,7 @@ export default function CommunityDetailPage() {
                             <CardContent className="p-4">
                                 <div className="flex gap-4">
                                     <Avatar>
-                                        <AvatarFallback>{user?.name?.[0] || 'U'}</AvatarFallback>
+                                        <AvatarFallback>{user?.full_name?.[0] || 'U'}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 space-y-4">
                                         <Textarea 
@@ -214,14 +254,39 @@ export default function CommunityDetailPage() {
                                             value={newPostContent}
                                             onChange={(e) => setNewPostContent(e.target.value)}
                                         />
+                                        
+                                        {imagePreview && (
+                                            <div className="relative inline-block">
+                                                <img src={imagePreview} alt="Preview" className="h-32 rounded-lg object-cover" />
+                                                <button 
+                                                    onClick={removeImage}
+                                                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        )}
+
                                         <div className="flex justify-between items-center">
                                             <div className="flex gap-2">
-                                                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                                                <input 
+                                                    type="file" 
+                                                    ref={fileInputRef} 
+                                                    className="hidden" 
+                                                    accept="image/*"
+                                                    onChange={handleImageSelect}
+                                                />
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="text-muted-foreground hover:text-primary"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
                                                     <ImageIcon className="h-4 w-4 mr-2" />
                                                     Add Image
                                                 </Button>
                                             </div>
-                                            <Button onClick={handleCreatePost} disabled={!newPostContent.trim()}>
+                                            <Button onClick={handleCreatePost} disabled={!newPostContent.trim() && !selectedImage}>
                                                 <Send className="h-4 w-4 mr-2" />
                                                 Post
                                             </Button>
@@ -300,6 +365,15 @@ function PostCard({ post, onLike }: { post: Post; onLike: () => void }) {
         }
     };
 
+    const formatDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+            return formatDistanceToNow(date, { addSuffix: true });
+        } catch (e) {
+            return "just now";
+        }
+    };
+
     return (
         <Card className="border-none shadow-md hover:shadow-lg transition-shadow duration-200">
             <CardContent className="p-6">
@@ -312,7 +386,7 @@ function PostCard({ post, onLike }: { post: Post; onLike: () => void }) {
                             <div>
                                 <h3 className="font-semibold">{post.user_name || 'Anonymous User'}</h3>
                                 <p className="text-xs text-muted-foreground">
-                                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                                    {formatDate(post.created_at)}
                                 </p>
                             </div>
                             <Button variant="ghost" size="icon">
@@ -366,7 +440,7 @@ function PostCard({ post, onLike }: { post: Post; onLike: () => void }) {
                                                     <div className="flex justify-between items-center mb-1">
                                                         <span className="font-medium text-sm">{reply.user_name}</span>
                                                         <span className="text-xs text-muted-foreground">
-                                                            {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
+                                                            {formatDate(reply.created_at)}
                                                         </span>
                                                     </div>
                                                     <p className="text-sm">{reply.content}</p>

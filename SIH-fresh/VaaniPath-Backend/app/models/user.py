@@ -21,6 +21,7 @@ class UserResponse(BaseModel):
     is_teacher: bool = False
     is_admin: bool = False
     avatar_url: Optional[str] = None
+    gyan_points: int = 0
     created_at: datetime
 
 class Token(BaseModel):

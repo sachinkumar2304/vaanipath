@@ -43,6 +43,11 @@ import NotFound from "./pages/NotFound";
 import { Settings } from "./pages/Settings";
 import CommunitiesPage from "./features/community/pages/CommunitiesPage";
 import CommunityDetailPage from "./features/community/pages/CommunityDetailPage";
+import CompetitionDetailPage from './features/community/pages/CompetitionDetailPage';
+import CompetitionCreatePage from './features/community/pages/CompetitionCreatePage';
+import CompetitionPlayPage from './features/community/pages/CompetitionPlayPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 
 const queryClient = new QueryClient();
 
@@ -99,9 +104,15 @@ const AppContent = () => {
           <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/course-player/:courseId" element={<CoursePlayer />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/community/:communityId" element={<CommunityDetailPage />} />
-          <Route path="/community" element={<Navigate to="/communities" replace />} />
+          
+          {/* New Pages */}
           <Route path="/communities" element={<CommunitiesPage />} />
+          <Route path="/community/:communityId" element={<CommunityDetailPage />} />
+          <Route path="/community/:communityId/create-competition" element={<CompetitionCreatePage />} />
+          <Route path="/community/competition/:competitionId" element={<CompetitionDetailPage />} />
+          <Route path="/community/competition/:competitionId/play" element={<CompetitionPlayPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings-page" element={<SettingsPage />} />
 
           {/* Teacher Routes */}
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />

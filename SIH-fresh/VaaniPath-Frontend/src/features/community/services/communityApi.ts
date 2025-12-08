@@ -55,6 +55,17 @@ export const getPosts = async (params: {
   return response.data;
 };
 
+export const uploadPostMedia = async (file: File): Promise<{ url: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/community/posts/upload-media', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
 export const createPost = async (data: PostCreate): Promise<Post> => {
   const response = await api.post('/community/posts', data);
   return response.data;
@@ -91,6 +102,11 @@ export const registerForCompetition = async (competitionId: string): Promise<{ m
   return response.data;
 };
 
+export const getCompetitions = async (communityId: string): Promise<Competition[]> => {
+  const response = await api.get(`/community/competitions/by-community/${communityId}`);
+  return response.data;
+};
+
 export const submitAnswer = async (competitionId: string, data: {
   question_id: string;
   selected_answer: string;
@@ -105,4 +121,19 @@ export const submitAnswer = async (competitionId: string, data: {
 export const getLeaderboard = async (competitionId: string): Promise<{ entries: LeaderboardEntry[]; total_participants: number }> => {
   const response = await api.get(`/community/competitions/${competitionId}/leaderboard`);
   return response.data;
+};
+
+export const getGyanPoints = async () => {
+    const response = await api.get<{ total_points: number }>('/community/gyan-points/me');
+    return response.data;
+};
+
+export const getGyanPointsHistory = async () => {
+    const response = await api.get<any[]>('/community/gyan-points/history');
+    return response.data;
+};
+
+export const getCompetition = async (id: string): Promise<Competition> => {
+    const response = await api.get(`/community/competitions/${id}`);
+    return response.data;
 };

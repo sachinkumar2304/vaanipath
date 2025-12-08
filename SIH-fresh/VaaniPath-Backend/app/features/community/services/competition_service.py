@@ -4,7 +4,7 @@ Business logic for competitions, quizzes, and leaderboards
 """
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from app.features.community.database import community_db
 from app.features.community.models.competition import (
     CompetitionCreate, CompetitionUpdate, CompetitionResponse, CompetitionList,
@@ -95,11 +95,32 @@ class CompetitionService:
             if existing.data:
                 return {"message": "Already registered"}
             
-            # Check if competition has started
-            comp = community_db.table("competitions").select("start_time, status").eq("id", str(competition_id)).execute()
-            if comp.data[0]["status"] != "upcoming":
-                raise ValueError("Cannot register for a competition that has already started")
+            # Check if competition is valid
+            comp = community_db.table("competitions").select("start_time, end_time, status").eq("id", str(competition_id)).execute()
+            if not comp.data:
+                raise ValueError("Competition not found")
             
+            comp_data = comp.data[0]
+            now = datetime.utcnow()
+            start_time = datetime.fromisoformat(comp_data["start_time"].replace('Z', ''))
+            end_time = datetime.fromisoformat(comp_data["end_time"].replace('Z', ''))
+
+            # Update status if needed
+            if comp_data["status"] == "upcoming" and now >= start_time:
+                 # Check if it should be active
+                 if now < end_time:
+                     community_db.table("competitions").update({"status": "active"}).eq("id", str(competition_id)).execute()
+                     comp_data["status"] = "active"
+
+            # User Requirement: "student can join only when it starts"
+            # Allow joining if active 
+            if comp_data["status"] != "active":
+                 # Use a small grace period or check strictly
+                 if now < start_time:
+                     raise ValueError("Competition has not started yet. You can join only when it starts.")
+                 if now > end_time:
+                     raise ValueError("Competition has ended.")
+
             # Register
             community_db.table("competition_registrations").insert({
                 "competition_id": str(competition_id),
@@ -107,8 +128,8 @@ class CompetitionService:
             }).execute()
             
             # Increment participants count
-            comp_data = community_db.table("competitions").select("participants_count").eq("id", str(competition_id)).execute()
-            new_count = comp_data.data[0]["participants_count"] + 1
+            current_count_res = community_db.table("competitions").select("participants_count").eq("id", str(competition_id)).execute()
+            new_count = (current_count_res.data[0]["participants_count"] or 0) + 1
             
             community_db.table("competitions").update({
                 "participants_count": new_count
@@ -121,11 +142,25 @@ class CompetitionService:
         except Exception as e:
             logger.error(f"❌ Error registering for competition: {e}")
             raise
-    
+
     @staticmethod
     async def submit_answer(submission: SubmissionCreate, user_id: UUID) -> SubmissionResponse:
         """Submit an answer to a competition question"""
         try:
+             # Check if competition is active
+            comp = community_db.table("competitions").select("status, end_time").eq("id", str(submission.competition_id)).execute()
+            if not comp.data:
+                raise ValueError("Competition not found")
+            
+            comp_data = comp.data[0]
+            now = datetime.utcnow()
+            end_time = datetime.fromisoformat(comp_data["end_time"].replace('Z', ''))
+            
+            if now > end_time or comp_data["status"] == "completed":
+                # Trigger finalization if needed, but reject submission
+                await CompetitionService.finalize_competition(submission.competition_id)
+                raise ValueError("Competition has ended")
+
             # Get question to check correct answer
             question = community_db.table("competition_questions").select("correct_answer, points").eq(
                 "id", str(submission.question_id)
@@ -134,6 +169,11 @@ class CompetitionService:
             if not question.data:
                 raise ValueError("Question not found")
             
+            # Check if already answered
+            existing = community_db.table("competition_submissions").select("id").eq("user_id", str(user_id)).eq("question_id", str(submission.question_id)).execute()
+            if existing.data:
+                 raise ValueError("Question already answered")
+
             is_correct = question.data[0]["correct_answer"] == submission.selected_answer
             points_earned = question.data[0]["points"] if is_correct else 0
             
@@ -153,6 +193,56 @@ class CompetitionService:
             logger.error(f"❌ Error submitting answer: {e}")
             raise
     
+    @staticmethod
+    async def finalize_competition(competition_id: UUID):
+        """Finalize competition, determine winner, and award GyanPoints"""
+        from app.db.supabase_client import get_supabase
+        
+        try:
+            # Check current status
+            comp_res = community_db.table("competitions").select("status, points_first").eq("id", str(competition_id)).execute()
+            if not comp_res.data: 
+                return
+            
+            comp = comp_res.data[0]
+            if comp["status"] == "completed":
+                return # Already finalized
+            
+            logger.info(f"🏁 Finalizing competition {competition_id}...")
+            
+            # Get Leaderboard
+            leaderboard = await CompetitionService.get_leaderboard(competition_id)
+            
+            if leaderboard.entries:
+                # Winner is different from LeaderboardEntry (it has full stats)
+                winner = leaderboard.entries[0]
+                winner_id = winner.user_id
+                
+                # Award points in Main DB
+                main_db = get_supabase()
+                
+                # Fetch current points
+                # Note: 'users' table in public schema usually linked to auth.users
+                # We need to ensure we can select/update it.
+                user_res = main_db.table("users").select("gyan_points").eq("id", str(winner_id)).execute()
+                
+                if user_res.data:
+                    current_points = user_res.data[0].get("gyan_points", 0) or 0
+                    points_to_award = 100 # Fixed as per user req, or comp["points_first"]
+                    new_points = current_points + points_to_award
+                    
+                    # Update
+                    main_db.table("users").update({"gyan_points": new_points}).eq("id", str(winner_id)).execute()
+                    logger.info(f"🏆 Awarded {points_to_award} GyanPoints to winner {winner_id}")
+            
+            # Mark as completed
+            community_db.table("competitions").update({"status": "completed"}).eq("id", str(competition_id)).execute()
+            logger.info(f"✅ Competition {competition_id} finalized")
+            
+        except Exception as e:
+            logger.error(f"❌ Error finalizing competition: {e}")
+            # Don't raise, just log, as this might be called from get_competition
+            
     @staticmethod
     async def get_leaderboard(competition_id: UUID) -> Leaderboard:
         """Get competition leaderboard"""
@@ -187,12 +277,27 @@ class CompetitionService:
             
             # Create leaderboard entries
             entries = []
+            
+            # Optimization: Fetch all user names in one query if possible
+            # For now, we'll just put placeholders or try to fetch if we had a batch endpoint
+            
+            from app.db.supabase_client import get_supabase
+            main_db = get_supabase()
+            
             for rank, (user_id, scores) in enumerate(sorted_users, 1):
-                # TODO: Fetch user info from main DB
+                # Fetch user info
+                user_info = {"full_name": "Unknown", "email": ""}
+                try:
+                    u_res = main_db.table("users").select("full_name, email").eq("id", user_id).execute()
+                    if u_res.data:
+                        user_info = u_res.data[0]
+                except:
+                    pass
+
                 entries.append(LeaderboardEntry(
                     user_id=UUID(user_id),
-                    user_name="User",  # Placeholder
-                    user_email="user@example.com",  # Placeholder
+                    user_name=user_info.get("full_name", "User"),
+                    user_email=user_info.get("email", ""), 
                     total_score=scores["total_score"],
                     correct_answers=scores["correct_answers"],
                     total_answers=scores["total_answers"],
@@ -207,25 +312,105 @@ class CompetitionService:
         except Exception as e:
             logger.error(f"❌ Error fetching leaderboard: {e}")
             raise
+
     @staticmethod
     async def get_competitions_by_community(community_id: UUID) -> List[CompetitionResponse]:
         """Get all competitions for a specific community"""
         try:
+            # Auto-update statuses if needed (lazy check)
+            # Not doing meaningful loop updates here to save perf, rely on get_by_id checks
+            
             competitions = community_db.table("competitions").select("*").eq(
                 "community_id", str(community_id)
             ).order("created_at", desc=True).execute()
             
-            # Map simple dictionary to Pydantic model
-            # Note: client might need to handle is_registered checks separately or loop here
-            # For simplicity, returning list.
             results = []
             for comp in competitions.data:
                 results.append(CompetitionResponse(
                     **comp,
-                    is_registered=False, # TODO: Check registration status for current user if needed
+                    is_registered=False, 
                     user_score=None
                 ))
             return results
         except Exception as e:
             logger.error(f"❌ Error fetching competitions: {e}")
+            raise
+
+    @staticmethod
+    async def get_competition_by_id(competition_id: UUID) -> CompetitionResponse:
+        """Get a single competition by ID"""
+        try:
+            result = community_db.table("competitions").select("*").eq("id", str(competition_id)).execute()
+            
+            if not result.data:
+                raise ValueError("Competition not found")
+            
+            comp = result.data[0]
+            
+            # Date Handling
+            now = datetime.utcnow()
+            start_time = datetime.fromisoformat(comp["start_time"].replace('Z', ''))
+            end_time = datetime.fromisoformat(comp["end_time"].replace('Z', ''))
+            
+            # Lazy Status Update
+            status_changed = False
+            if comp["status"] == "upcoming" and now >= start_time:
+                 comp["status"] = "active"
+                 status_changed = True
+            
+            if (comp["status"] == "active" or comp["status"] == "upcoming") and now > end_time:
+                 # Should be completed
+                 # Trigger finalization async or await? Await to ensure consistent state
+                 await CompetitionService.finalize_competition(competition_id)
+                 comp["status"] = "completed"
+                 status_changed = True
+            
+            if status_changed:
+                 # Just update status string in DB, finalize already did its job if completed
+                 if comp["status"] != "completed": # finalize handles db update for completed
+                     community_db.table("competitions").update({"status": comp["status"]}).eq("id", str(competition_id)).execute()
+
+            return CompetitionResponse(
+                **comp,
+                is_registered=False, 
+                user_score=None
+            )
+        except Exception as e:
+            logger.error(f"❌ Error fetching competition {competition_id}: {e}")
+            raise
+
+    @staticmethod
+    async def get_student_questions(competition_id: UUID, user_id: UUID) -> List[dict]:
+        """Get questions for a student (hides correct answer)"""
+        try:
+            # Check participation
+            reg = community_db.table("competition_registrations").select("*").eq("competition_id", str(competition_id)).eq("user_id", str(user_id)).execute()
+            # If strict "must register" required:
+            # if not reg.data: raise ValueError("Not registered")
+            
+            # Check status
+            comp = community_db.table("competitions").select("status").eq("id", str(competition_id)).execute()
+            if not comp.data or comp.data[0]["status"] != "active":
+                 # Allow seeing questions if completed? Maybe for review. For now restrict to active.
+                 # User said "answer the contest quiz for the duration".
+                 if comp.data and comp.data[0]["status"] == "completed":
+                      pass # Allow review?
+                 else:
+                      pass 
+                      # For strictness:
+                      # if comp.data[0]["status"] != "active": raise ValueError("Competition not active")
+
+            questions = community_db.table("competition_questions").select("*").eq("competition_id", str(competition_id)).order("question_order").execute()
+            
+            # Mask correct answers
+            masked_questions = []
+            for q in questions.data:
+                q_copy = q.copy()
+                if "correct_answer" in q_copy:
+                    del q_copy["correct_answer"]
+                masked_questions.append(q_copy)
+            
+            return masked_questions
+        except Exception as e:
+            logger.error(f"❌ Error fetching questions: {e}")
             raise

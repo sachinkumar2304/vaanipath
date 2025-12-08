@@ -11,7 +11,7 @@ from app.features.community.models.competition import (
     Leaderboard
 )
 from app.features.community.services.competition_service import CompetitionService
-from app.core.deps import get_current_user, get_current_teacher
+from app.api.deps import get_current_user, get_current_teacher
 import logging
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,30 @@ async def add_questions(
         )
     except Exception as e:
         logger.error(f"Error adding questions: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/{competition_id}/questions")
+async def get_questions(
+    competition_id: UUID,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get questions for a competition (Student view)"""
+    try:
+        return await CompetitionService.get_student_questions(
+            competition_id,
+            UUID(current_user["id"])
+        )
+    except ValueError as e:
+         raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error fetching questions: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -125,6 +149,43 @@ async def get_leaderboard(
         return await CompetitionService.get_leaderboard(competition_id)
     except Exception as e:
         logger.error(f"Error fetching leaderboard: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/by-community/{community_id}", response_model=List[CompetitionResponse])
+async def get_competitions_for_community(
+    community_id: UUID,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get active competitions for a community"""
+    try:
+        return await CompetitionService.get_competitions_by_community(community_id)
+    except Exception as e:
+        logger.error(f"Error fetching competitions: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/{competition_id}", response_model=CompetitionResponse)
+async def get_competition(
+    competition_id: UUID,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a single competition by ID"""
+    try:
+        return await CompetitionService.get_competition_by_id(competition_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error fetching competition: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)

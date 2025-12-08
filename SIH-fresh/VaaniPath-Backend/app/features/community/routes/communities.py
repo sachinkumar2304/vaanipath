@@ -9,7 +9,7 @@ from app.features.community.models.community import (
     CommunityCreate, CommunityUpdate, CommunityResponse, CommunityList
 )
 from app.features.community.services.community_service import CommunityService
-from app.core.deps import get_current_user, get_current_teacher
+from app.api.deps import get_current_user, get_current_teacher
 import logging
 
 logger = logging.getLogger(__name__)

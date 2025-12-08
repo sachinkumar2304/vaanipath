@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { getErrorMessage } from '@/lib/utils';
 
 const StudentLogin = () => {
   const { t } = useTranslation();
@@ -85,7 +86,7 @@ const StudentLogin = () => {
     } catch (error: any) {
       toast({
         title: 'Login Failed',
-        description: error.response?.data?.detail || 'Invalid credentials',
+        description: getErrorMessage(error) || 'Invalid credentials',
         variant: 'destructive',
       });
     } finally {
@@ -136,7 +137,7 @@ const StudentLogin = () => {
     } catch (error: any) {
       toast({
         title: 'Signup Failed',
-        description: error.response?.data?.detail || 'Failed to create account',
+        description: getErrorMessage(error) || 'Failed to create account',
         variant: 'destructive',
       });
     } finally {

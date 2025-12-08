@@ -2,20 +2,86 @@
 Post Routes
 API endpoints for posts, likes, and replies
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from typing import Optional
 from uuid import UUID
+import logging
+import uuid
+import cloudinary
+import cloudinary.uploader
+from app.config import settings
 from app.features.community.models.post import (
     PostCreate, PostUpdate, PostResponse, PostList,
     ReplyCreate, ReplyResponse, ReplyList
 )
 from app.features.community.services.post_service import PostService
-from app.core.deps import get_current_user
-import logging
+from app.api.deps import get_current_user
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
+
+
+@router.post("/upload-media", status_code=status.HTTP_201_CREATED)
+async def upload_media(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Upload media for a post
+    """
+    try:
+        # Validate file format
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No file provided"
+            )
+        
+        file_ext = file.filename.split('.')[-1].lower()
+        if file_ext not in ["jpg", "jpeg", "png", "webp", "gif"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file format. Allowed: jpg, jpeg, png, webp, gif"
+            )
+        
+        # Configure Cloudinary
+        if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Storage service not configured"
+            )
+        
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+            api_key=settings.CLOUDINARY_API_KEY,
+            api_secret=settings.CLOUDINARY_API_SECRET
+        )
+        
+        # Read file content
+        file_content = await file.read()
+        
+        # Upload to Cloudinary
+        temp_id = str(uuid.uuid4())
+        upload_result = cloudinary.uploader.upload(
+            file_content,
+            resource_type="image",
+            public_id=f"community/posts/{temp_id}",
+            folder="gyanify/community/posts",
+            overwrite=True,
+            tags=["gyanify", "community", "post"]
+        )
+        
+        return {"url": upload_result.get("secure_url")}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading media: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
 
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
