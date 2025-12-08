@@ -164,21 +164,87 @@ export default function CompetitionDetailPage() {
                             </Card>
                         </TabsContent>
                         <TabsContent value="leaderboard" className="mt-6">
-                             <Card className="bg-card/40 backdrop-blur-md border-white/10">
-                                <CardHeader>
-                                    <CardTitle>Top Performers</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                                        <Trophy className="h-12 w-12 mb-4 opacity-50" />
-                                        <p>Leaderboard will be available after the competition ends.</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <LeaderboardView competitionId={competitionId!} status={competition.status} />
                         </TabsContent>
                     </Tabs>
                 </div>
             </main>
         </div>
+    );
+}
+
+function LeaderboardView({ competitionId, status }: { competitionId: string, status: string }) {
+    const [entries, setEntries] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                // Using dynamic import or direct api call if available. 
+                // Assuming getLeaderboard exists or I call api directly
+                const api = (await import('@/services/api')).default;
+                const response = await api.get(`/community/competitions/${competitionId}/leaderboard`);
+                setEntries(response.data.entries || []);
+            } catch (error) {
+                console.error("Failed to load leaderboard", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLeaderboard();
+        // Poll every 10 seconds for realtime updates
+        const interval = setInterval(fetchLeaderboard, 10000);
+        return () => clearInterval(interval);
+    }, [competitionId]);
+
+    if (isLoading) return <div className="text-center py-8">Loading leaderboard...</div>;
+
+    if (entries.length === 0) {
+        return (
+             <Card className="bg-card/40 backdrop-blur-md border-white/10">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Trophy className="h-12 w-12 mb-4 opacity-50" />
+                    <p>No participants yet. Be the first!</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card className="bg-card/40 backdrop-blur-md border-white/10">
+            <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                    <span>Live Leaderboard</span>
+                    <span className="text-xs font-normal text-muted-foreground bg-primary/10 px-2 py-1 rounded-full animate-pulse">
+                        Config: Updates live
+                    </span>
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    {entries.map((entry, index) => (
+                        <div key={entry.user_id} className="flex items-center justify-between p-3 rounded-lg bg-card/60 border border-white/5 hover:border-primary/30 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold
+                                    ${index === 0 ? 'bg-yellow-500/20 text-yellow-500' : 
+                                      index === 1 ? 'bg-gray-400/20 text-gray-400' :
+                                      index === 2 ? 'bg-orange-500/20 text-orange-500' : 'bg-muted text-muted-foreground'}
+                                `}>
+                                    {index + 1}
+                                </div>
+                                <div>
+                                    <p className="font-semibold">{entry.user_name || 'Anonymous'}</p>
+                                    <p className="text-xs text-muted-foreground">{entry.correct_answers}/{entry.total_answers || 0} Correct</p>
+                                </div>
+                            </div>
+                            <div className="font-mono font-bold text-primary">
+                                {entry.total_score} pts
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
     );
 }

@@ -12,6 +12,7 @@ import { getMyEnrollments, Enrollment } from '@/services/enrollments';
 import { BookOpen, Play, Video, CheckCircle2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 const MyCourses = () => {
     const { t } = useTranslation();
@@ -19,33 +20,20 @@ const MyCourses = () => {
     const { toast } = useToast();
     const { user } = useAuth();
 
-    const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data, isLoading } = useQuery({
+        queryKey: ['my-enrollments'],
+        queryFn: getMyEnrollments,
+        enabled: !!user,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+
+    const enrollments = data?.enrollments || [];
 
     useEffect(() => {
         if (!user) {
             navigate('/login');
-            return;
         }
-        loadEnrollments();
     }, [user, navigate]);
-
-    const loadEnrollments = async () => {
-        try {
-            setIsLoading(true);
-            const response = await getMyEnrollments();
-            setEnrollments(response.enrollments);
-        } catch (error) {
-            console.error('Failed to load enrollments:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to load your courses',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     return (
         <div className="min-h-screen relative bg-background text-foreground transition-colors duration-300">
@@ -75,9 +63,20 @@ const MyCourses = () => {
 
                 {/* Course Grid */}
                 {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <BookOpen className="h-16 w-16 text-primary mb-4 animate-pulse" />
-                        <p className="text-muted-foreground">{t('myCourses.loading')}</p>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <Card key={i} className="h-full flex flex-col overflow-hidden">
+                                <div className="aspect-video bg-muted/50 animate-pulse" />
+                                <CardHeader className="flex-grow space-y-3">
+                                    <div className="h-6 bg-muted/50 rounded animate-pulse" />
+                                    <div className="h-4 bg-muted/50 rounded w-3/4 animate-pulse" />
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <div className="h-2 bg-muted/50 rounded animate-pulse" />
+                                    <div className="h-10 bg-muted/50 rounded animate-pulse" />
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                 ) : enrollments.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -86,7 +85,7 @@ const MyCourses = () => {
                                 key={enrollment.id}
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                transition={{ duration: 0.3, delay: index * 0.05 }}
                                 whileHover={{ y: -8 }}
                                 className="h-full"
                             >

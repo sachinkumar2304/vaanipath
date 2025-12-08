@@ -63,6 +63,21 @@ async def signup(user: UserCreate):
                     detail="Failed to create user"
                 )
             
+            # Award 100 GyanPoints on Signup
+            try:
+                from app.features.community.services.gyan_points_service import GyanPointsService
+                created_user_id = response.data[0]['id']
+                await GyanPointsService.add_points(
+                    user_id=created_user_id,
+                    points=100,
+                    source="signup_bonus",
+                    description="Welcome Bonus: 100 GyanPoints for joining VaaniPath!",
+                    reference_id=None
+                )
+            except Exception as e:
+                logger.error(f"Failed to award signup points: {e}")
+                # Don't fail signup if points fail, but log it.
+
             logger.info(f"✅ User created: {user.email}")
             return response.data[0]
         except Exception as db_error:
@@ -88,8 +103,28 @@ async def signup(user: UserCreate):
 async def login(credentials: UserLogin):
     """
     Login and get access token
+    
+    Security Features:
+    - Rate limiting: 5 attempts per minute
+    - Account lockout: 5 failed attempts = 30 min lockout
+    - Request logging for failed attempts
     """
+    from app.core.security_middleware import (
+        check_account_lockout,
+        record_failed_login,
+        reset_failed_logins,
+        limiter
+    )
+    
     try:
+        # Check if account is locked
+        if check_account_lockout(credentials.email):
+            logger.warning(f"🔒 Account locked: {credentials.email}")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Account temporarily locked due to too many failed login attempts. Please try again in 30 minutes."
+            )
+        
         # Check if Supabase is configured
         if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
             logger.warning("Supabase not configured, returning mock token")
@@ -107,6 +142,7 @@ async def login(credentials: UserLogin):
             
             if not response.data:
                 logger.warning(f"User not found: {credentials.email}")
+                record_failed_login(credentials.email)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Incorrect email or password"
@@ -117,10 +153,14 @@ async def login(credentials: UserLogin):
             # Verify password
             if not verify_password(credentials.password, user["password_hash"]):
                 logger.warning(f"Invalid password for user: {credentials.email}")
+                record_failed_login(credentials.email)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Incorrect email or password"
                 )
+            
+            # Reset failed login attempts on successful login
+            reset_failed_logins(credentials.email)
             
             # Create access token
             access_token = create_access_token(data={"sub": user["id"]})

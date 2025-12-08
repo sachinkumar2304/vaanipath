@@ -23,7 +23,14 @@ export default function CompetitionCreatePage() {
     const [description, setDescription] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
-    const [points, setPoints] = useState(100);
+    const [difficulty, setDifficulty] = useState<'normal' | 'hard'>('normal');
+    const [points, setPoints] = useState(50); // Default for normal
+
+    // Update points when difficulty changes
+    const handleDifficultyChange = (val: 'normal' | 'hard') => {
+        setDifficulty(val);
+        setPoints(val === 'hard' ? 100 : 50);
+    };
 
     // Questions State
     const [questions, setQuestions] = useState<any[]>([
@@ -113,6 +120,7 @@ export default function CompetitionCreatePage() {
                 description,
                 start_time: new Date(startTime).toISOString(),
                 end_time: new Date(endTime).toISOString(),
+                difficulty,
                 points_first: points,
                 points_second: Math.round(points * 0.75),
                 points_third: Math.round(points * 0.5),
@@ -185,10 +193,30 @@ export default function CompetitionCreatePage() {
                                     <Input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Winning Points (1st Place)</Label>
-                                <Input type="number" value={points} onChange={(e) => setPoints(parseInt(e.target.value))} />
-                                <p className="text-xs text-muted-foreground">Usually 100 GyanPoints</p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Difficulty Mode</Label>
+                                    <Select value={difficulty} onValueChange={(val: 'normal' | 'hard') => handleDifficultyChange(val)}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="normal">Normal (Instant Score, 50 pts)</SelectItem>
+                                            <SelectItem value="hard">Hard (Score Hidden, 100 pts)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        {difficulty === 'normal' 
+                                            ? "Participants see their score immediately." 
+                                            : "Participants only see their score after the contest ends."
+                                        }
+                                    </p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Winning Points (1st Place)</Label>
+                                    <Input type="number" value={points} onChange={(e) => setPoints(parseInt(e.target.value))} />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

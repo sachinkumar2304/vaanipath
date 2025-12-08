@@ -19,12 +19,14 @@ def build_manifest(
     final_audio: str | None = None,
     final_video: str | None = None,
     cloudinary_url: str | None = None,  # 🚀 NEW: Cloudinary URL
+    subtitle_url: str | None = None,    # 🚀 NEW: Subtitle URL
 ) -> Dict:
     """Create a manifest JSON describing the localization job.
 
     ``final_audio`` and ``final_video`` are optional paths that point to the
     globally synchronized audio file and the final merged video output.
     ``cloudinary_url`` is the optional Cloudinary URL for the dubbed video.
+    ``subtitle_url`` is the optional Cloudinary URL for the VTT subtitle file.
     """
     data = {
         "job_id": job_id,
@@ -42,6 +44,8 @@ def build_manifest(
         data["final_video"] = final_video
     if cloudinary_url:  # 🚀 NEW: Store Cloudinary URL
         data["cloudinary_url"] = cloudinary_url
+    if subtitle_url:    # 🚀 NEW: Store Subtitle URL
+        data["subtitle_url"] = subtitle_url
     mkdir_p(output_dir)
     out_path = os.path.join(output_dir, "manifest.json")
     with open(out_path, "w", encoding="utf-8") as f:

@@ -214,9 +214,9 @@ export default function CommunityDetailPage() {
                                     <Button 
                                         variant="secondary" 
                                         className="flex-1 md:flex-none"
-                                        onClick={() => toast({ title: "Coming Soon", description: "Community management features are coming soon!" })}
+                                        onClick={() => navigate(`/community/${communityId}/create-competition`)}
                                     >
-                                        Manage
+                                        Create Contest
                                     </Button>
                                 )}
                             </div>

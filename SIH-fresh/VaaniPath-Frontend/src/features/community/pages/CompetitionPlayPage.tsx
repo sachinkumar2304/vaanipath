@@ -81,7 +81,11 @@ export default function CompetitionPlayPage() {
                 setCurrentQuestionIndex(prev => prev + 1);
                 setSelectedAnswer(null);
             } else {
-                toast.success("Quiz completed!");
+                if (competition?.difficulty === 'hard') {
+                    toast.success("Quiz Submitted! Score will be revealed after contest ends.");
+                } else {
+                    toast.success("Quiz completed!");
+                }
                 navigate(`/community/competition/${competitionId}`);
             }
         } catch (error) {

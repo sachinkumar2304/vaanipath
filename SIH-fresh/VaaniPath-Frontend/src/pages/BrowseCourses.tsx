@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 const BrowseCourses = () => {
     const { t } = useTranslation();
@@ -34,43 +35,43 @@ const BrowseCourses = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSubject, setSelectedSubject] = useState<string>('all');
     const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
-    const [isLoading, setIsLoading] = useState(true);
+    // isLoading is now handled by useQuery
     const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
+    const { data: coursesData, isLoading: isCoursesLoading } = useQuery({
+        queryKey: ['courses', searchQuery, selectedSubject, selectedLanguage],
+        queryFn: () => getAllCourses({
+            search: searchQuery || undefined,
+            domain: selectedSubject !== 'all' ? selectedSubject : undefined,
+            language: selectedLanguage !== 'all' ? selectedLanguage : undefined,
+        }),
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+
+    const { data: enrollmentsData } = useQuery({
+        queryKey: ['my-enrollments'],
+        queryFn: getMyEnrollments,
+        enabled: !!user, // Only fetch if user is logged in
+    });
+
     useEffect(() => {
-        loadCourses();
-    }, []);
-
-    const loadCourses = async () => {
-        try {
-            setIsLoading(true);
-            const response = await getAllCourses({
-                search: searchQuery || undefined,
-                domain: selectedSubject !== 'all' ? selectedSubject : undefined,
-                language: selectedLanguage !== 'all' ? selectedLanguage : undefined,
-            });
-            setCourses(response.courses);
-
-            // Check enrollment status efficiently
-            if (user) {
-                try {
-                    const enrollmentsRes = await getMyEnrollments();
-                    const enrolledIds = new Set(enrollmentsRes.enrollments.map(e => e.course_id));
-                    setEnrolledCourses(enrolledIds);
-                } catch (error) {
-                    console.error('Failed to load enrollments:', error);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to load courses:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to load courses',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
+        if (coursesData) {
+            setCourses(coursesData.courses);
         }
+    }, [coursesData]);
+
+    useEffect(() => {
+        if (enrollmentsData) {
+            const enrolledIds = new Set(enrollmentsData.enrollments.map((e: any) => e.course_id));
+            setEnrolledCourses(enrolledIds);
+        }
+    }, [enrollmentsData]);
+
+    const isLoading = isCoursesLoading;
+
+    // Legacy loadCourses for manual refresh if needed (though React Query handles this)
+    const loadCourses = () => {
+        // queryClient.invalidateQueries({ queryKey: ['courses'] })
     };
 
     const handleEnroll = async (courseId: string, courseTitle: string) => {
@@ -214,9 +215,28 @@ const BrowseCourses = () => {
 
                 {/* Course Grid */}
                 {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <BookOpen className="h-16 w-16 text-primary mb-4 animate-pulse" />
-                        <p className="text-muted-foreground">{t('browseCourses.loading')}</p>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <Card key={i} className="h-full flex flex-col overflow-hidden">
+                                <div className="aspect-video bg-muted/50 animate-pulse" />
+                                <CardHeader className="flex-grow space-y-3">
+                                    <div className="flex gap-2 mb-2">
+                                        <div className="h-5 w-16 bg-muted/50 rounded-full animate-pulse" />
+                                        <div className="h-5 w-12 bg-muted/50 rounded-full animate-pulse" />
+                                    </div>
+                                    <div className="h-6 bg-muted/50 rounded animate-pulse" />
+                                    <div className="h-4 bg-muted/50 rounded w-3/4 animate-pulse" />
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <div className="h-4 bg-muted/50 rounded w-1/2 animate-pulse" />
+                                    <div className="flex justify-between">
+                                        <div className="h-4 bg-muted/50 rounded w-20 animate-pulse" />
+                                        <div className="h-4 bg-muted/50 rounded w-16 animate-pulse" />
+                                    </div>
+                                    <div className="h-10 bg-muted/50 rounded animate-pulse" />
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                 ) : courses.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

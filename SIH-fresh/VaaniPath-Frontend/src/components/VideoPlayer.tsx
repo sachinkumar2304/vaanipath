@@ -318,6 +318,30 @@ export const VideoPlayer = ({
     };
   }, []);
 
+  // Handle subtitle track switching
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Wait for tracks to load
+    const updateTracks = () => {
+      Array.from(video.textTracks).forEach((track) => {
+        if (selectedCaption === 'off') {
+          track.mode = 'hidden';
+        } else {
+          // Match by language
+          track.mode = track.language === selectedCaption ? 'showing' : 'hidden';
+        }
+      });
+    };
+
+    updateTracks();
+
+    // Also listen for track changes (in case they load late)
+    video.addEventListener('loadedmetadata', updateTracks);
+    return () => video.removeEventListener('loadedmetadata', updateTracks);
+  }, [selectedCaption]);
+
   // Sticky mini-player on scroll
   useEffect(() => {
     const handleScroll = () => {

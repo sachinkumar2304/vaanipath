@@ -89,6 +89,9 @@ export default {
         "2xl": "2rem",
         "3xl": "2.5rem",
       },
+      ringWidth: {
+        '3': '3px',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

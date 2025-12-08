@@ -538,19 +538,27 @@ async def complete_quiz(
         
         # Get detailed answer results
         answer_results = []
-        for ans in answers:
-            question = supabase.table("quiz_questions")\
-                .select("correct_answer, explanation")\
-                .eq("id", ans["question_id"])\
+        
+        # 🚀 BATCH FETCH: Get all questions in ONE query
+        question_ids = [ans["question_id"] for ans in answers]
+        if question_ids:
+            questions_response = supabase.table("quiz_questions")\
+                .select("id, correct_answer, explanation")\
+                .in_("id", question_ids)\
                 .execute()
             
-            if question.data:
-                answer_results.append({
-                    "question_id": ans["question_id"],
-                    "is_correct": ans["is_correct"],
-                    "correct_answer": question.data[0]["correct_answer"],
-                    "explanation": question.data[0].get("explanation")
-                })
+            questions_map = {q["id"]: q for q in (questions_response.data or [])}
+            
+            for ans in answers:
+                question_data = questions_map.get(ans["question_id"])
+                
+                if question_data:
+                    answer_results.append({
+                        "question_id": ans["question_id"],
+                        "is_correct": ans["is_correct"],
+                        "correct_answer": question_data["correct_answer"],
+                        "explanation": question_data.get("explanation")
+                    })
         
         return {
             "session_id": session_id,

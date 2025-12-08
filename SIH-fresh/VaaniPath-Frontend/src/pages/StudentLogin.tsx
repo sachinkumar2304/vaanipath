@@ -239,7 +239,7 @@ const StudentLogin = () => {
                   </div>
                   <form onSubmit={handleSignup} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Full Name <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="signup-name">Full Name <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                       <Input
                         id="signup-name"
                         placeholder="e.g. Rahul Kumar"
@@ -250,7 +250,7 @@ const StudentLogin = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email Address <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="signup-email">Email Address <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                       <Input
                         id="signup-email"
                         type="email"
@@ -263,7 +263,7 @@ const StudentLogin = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="signup-password">Password <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="signup-password">Password <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                         <Input
                           id="signup-password"
                           type="password"
@@ -274,7 +274,7 @@ const StudentLogin = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirm Password <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="confirm-password">Confirm Password <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                         <Input
                           id="confirm-password"
                           type="password"
@@ -287,7 +287,7 @@ const StudentLogin = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="language">{t('auth.preferredLanguage')} <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="language">{t('auth.preferredLanguage')} <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                       <Select onValueChange={(value) => setSignupData({ ...signupData, preferredLanguage: value })}>
                         <SelectTrigger id="language" className="bg-background/50 border-input focus:ring-primary transition-all hover:border-primary/50">
                           <SelectValue placeholder="Select Language" />
@@ -302,7 +302,7 @@ const StudentLogin = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="state">State <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="state">State <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                         <Input
                           id="state"
                           placeholder="State"
@@ -313,7 +313,7 @@ const StudentLogin = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="city">City <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="city">City <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                         <Input
                           id="city"
                           placeholder="City"
@@ -326,7 +326,7 @@ const StudentLogin = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="region">Region <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="region">Region <span className="text-destructive" aria-label="required">*</span> <span className="text-xs text-muted-foreground">(required)</span></Label>
                       <Input
                         id="region"
                         placeholder="Region"

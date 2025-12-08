@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+.env.local
+
+# Vector DB
+vector_db/
+*.faiss
+*.pkl
+
+# Uploads
+uploads/
+*.pdf
+
+# Audio files
+generated_audio/
+*.mp3
+*.wav
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+.DS_Store

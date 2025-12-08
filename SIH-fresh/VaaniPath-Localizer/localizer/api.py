@@ -1,14 +1,22 @@
 import os
 import json
 import asyncio
+import time
+import logging
 from typing import Optional, Dict, Any
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse
+# Setup Logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from .app import run_job, get_manifest, list_chunks, get_chunk_detail, reprocess_chunk
+from .podcast_generator import PodcastGenerator
+from .cloudinary_uploader import upload_video_to_cloudinary
 
 
 app = FastAPI(title="Localizer API", description="REST endpoints for video localization")
@@ -421,7 +429,9 @@ async def upload_and_localize(
         "manifest_path": manifest_path,
         "status": "success",
         "transcript_original": full_text_original.strip(),
-        "transcript_translated": full_text_translated.strip()
+        "transcript_translated": full_text_translated.strip(),
+        "subtitle_url": m.get("subtitle_url"),  # 🚀 NEW: Return subtitle URL
+        "english_subtitle_url": m.get("english_subtitle_url")  # 🚀 NEW: Return English subtitle URL
     }
 
 
@@ -437,3 +447,273 @@ async def upload_alias(
     voice: Optional[str] = Form(None),
 ) -> Dict[str, Any]:
     return await upload_and_localize(file, source, target, course_id, job_id, mode, voice)
+
+
+# -----------------
+# Podcast Generator Endpoint
+# -----------------
+    m = get_manifest(os.path.basename(os.path.dirname(manifest_path)))
+    final_out = finalize_resynthesis(manifest_path, m)
+    
+    try:
+        cleanup_job_artifacts(manifest_path)
+    except Exception:
+        pass
+    return FileResponse(final_out, media_type="video/mp4", filename=os.path.basename(final_out))
+
+
+# Feedback capture (MVP)
+@app.post("/feedback")
+async def submit_feedback(req: FeedbackRequest) -> Dict[str, Any]:
+    base_out = os.path.join(os.path.dirname(__file__), "output", req.job_id)
+    os.makedirs(base_out, exist_ok=True)
+    fb_path = os.path.join(base_out, "feedback.json")
+    payload = req.dict()
+    try:
+        existing = []
+        if os.path.exists(fb_path):
+            with open(fb_path, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+        existing.append(payload)
+        with open(fb_path, "w", encoding="utf-8") as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+        return {"ok": True, "count": len(existing)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Job stats
+@app.get("/jobs/{job_id}/stats")
+async def job_stats(job_id: str) -> Dict[str, Any]:
+    return get_job_stats(job_id)
+
+
+# Captions export: zip of SRT or VTT
+@app.get("/captions/{job_id}")
+async def export_captions(job_id: str, format: str = "srt") -> FileResponse:
+    fmt = format.lower().strip()
+    if fmt not in ("srt", "vtt"):
+        raise HTTPException(status_code=400, detail="format must be 'srt' or 'vtt'")
+    base_out = os.path.join(os.path.dirname(__file__), "output", job_id)
+    tts_dir = os.path.join(base_out, "tts")
+    if not os.path.isdir(tts_dir):
+        raise HTTPException(status_code=404, detail="tts directory not found")
+
+    import zipfile
+    tmp_zip = os.path.join(base_out, f"captions_{fmt}.zip")
+    # Convert SRT to VTT inline if needed
+    def srt_to_vtt(srt_text: str) -> str:
+        lines = srt_text.splitlines()
+        out = ["WEBVTT"]
+        for ln in lines:
+            if "-->" in ln:
+                out.append(ln.replace(",", "."))
+            else:
+                out.append(ln)
+        return "\n".join(out)
+
+    try:
+        with zipfile.ZipFile(tmp_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+            for name in sorted(os.listdir(tts_dir)):
+                if not name.lower().endswith(".srt"):
+                    continue
+                srt_path = os.path.join(tts_dir, name)
+                with open(srt_path, "r", encoding="utf-8") as f:
+                    srt_txt = f.read()
+                if fmt == "srt":
+                    zf.writestr(name, srt_txt)
+                else:
+                    vtt_name = name.replace(".srt", ".vtt")
+                    zf.writestr(vtt_name, srt_to_vtt(srt_txt))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return FileResponse(tmp_zip, media_type="application/zip", filename=os.path.basename(tmp_zip))
+
+
+# Seed Indian language voices via dynamic discovery
+@app.post("/voice/seed/india")
+async def seed_indian_voices(gender: str = "male") -> Dict[str, Any]:
+    langs = [
+        "hi-IN",
+        "bn-IN",
+        "ta-IN",
+        "te-IN",
+        "mr-IN",
+        "gu-IN",
+        "pa-IN",
+        "kn-IN",
+        "ml-IN",
+        "or-IN",
+    ]
+    vm = _load_voice_map()
+    applied = []
+    for lang in langs:
+        try:
+            chosen = await _resolve_gender_voice(lang, gender)
+            if chosen:
+                vm[lang] = chosen
+                vm.setdefault(lang.split("-")[0], chosen)
+                applied.append({"lang": lang, "voice": chosen})
+        except Exception:
+            continue
+    _save_voice_map(vm)
+    return {"ok": True, "applied": applied}
+
+
+@app.post("/jobs/upload")
+async def upload_and_localize(
+    file: UploadFile = File(...),
+    source: str = Form("en"),
+    target: str = Form("hi"),
+    course_id: str = Form("general"),
+    job_id: Optional[str] = Form(None),
+    mode: str = Form("fast"),
+    voice: Optional[str] = Form(None),
+) -> Dict[str, Any]:
+    # Apply voice preference if provided
+    await _apply_voice_param(target, voice)
+
+    uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+    filename = file.filename or "upload.mp4"
+    input_path = os.path.join(uploads_dir, filename)
+    with open(input_path, "wb") as f:
+        f.write(await file.read())
+
+    job = job_id or os.path.splitext(filename)[0]
+    
+    # Run blocking job in threadpool to avoid blocking event loop
+    # This also allows asyncio.run() in tts.py to work correctly (since it runs in a separate thread)
+    from fastapi.concurrency import run_in_threadpool
+    manifest_path = await run_in_threadpool(
+        run_job,
+        input_path=input_path,
+        source=source,
+        target=target,
+        job_id=job,
+        course_id=course_id,
+        mode=mode,
+    )
+    
+    # Reload manifest to get cloudinary URL
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        m = json.load(f)
+    
+    cloudinary_url = m.get("cloudinary_url")
+    if not cloudinary_url:
+        raise HTTPException(status_code=500, detail="Cloudinary URL not found in manifest")
+
+    # Extract Transcripts
+    full_text_original = ""
+    full_text_translated = ""
+    for chunk in m.get("chunks", []):
+        full_text_original += chunk.get("text_original", "") + " "
+        full_text_translated += chunk.get("text_translated", "") + " "
+
+    # Cleanup Local Files
+    try:
+        import shutil
+        job_dir = os.path.dirname(manifest_path)
+        shutil.rmtree(job_dir)
+    except Exception as e:
+        print(f"Cleanup failed for {job}: {e}")
+    
+    return {
+        "cloudinary_url": cloudinary_url,
+        "job_id": job,
+        "manifest_path": manifest_path,
+        "status": "success",
+        "transcript_original": full_text_original.strip(),
+        "transcript_translated": full_text_translated.strip(),
+        "subtitle_url": m.get("subtitle_url"),  # 🚀 NEW: Return subtitle URL
+        "english_subtitle_url": m.get("english_subtitle_url")  # 🚀 NEW: Return English subtitle URL
+    }
+
+
+# Alias endpoint for convenience
+@app.post("/upload")
+async def upload_alias(
+    file: UploadFile = File(...),
+    source: str = Form("en"),
+    target: str = Form("hi"),
+    course_id: str = Form("general"),
+    job_id: Optional[str] = Form(None),
+    mode: str = Form("fast"),
+    voice: Optional[str] = Form(None),
+) -> Dict[str, Any]:
+    return await upload_and_localize(file, source, target, course_id, job_id, mode, voice)
+
+
+# -----------------
+# Podcast Generator Endpoint
+# -----------------
+class PodcastRequest(BaseModel):
+    text: str
+    language: str = "english"
+
+@app.post("/podcast/generate")
+async def generate_podcast_api(
+    text: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    language: str = Form("english"),
+    background_tasks: BackgroundTasks = None
+):
+    """
+    Generate a podcast from text or PDF file.
+    """
+    if not text and not file:
+        raise HTTPException(status_code=400, detail="Either text or file must be provided")
+
+    job_id = f"pod_{int(time.time())}"
+    output_dir = os.path.join(os.path.dirname(__file__), "output", job_id)
+    
+    try:
+        generator = PodcastGenerator(output_dir)
+        
+        # Handle File Upload
+        input_text = text or ""
+        if file:
+            file_path = os.path.join(output_dir, file.filename)
+            with open(file_path, "wb") as f:
+                f.write(await file.read())
+            
+            if file.filename.lower().endswith(".pdf"):
+                extracted_text = generator.extract_text_from_pdf(file_path)
+                if extracted_text:
+                    input_text = extracted_text
+                else:
+                    raise HTTPException(status_code=400, detail="Could not extract text from PDF")
+            else:
+                 # Assume text file
+                 with open(file_path, "r", encoding="utf-8") as f:
+                     input_text = f.read()
+
+        if not input_text.strip():
+             raise HTTPException(status_code=400, detail="Input text is empty")
+
+        # Generate podcast
+        audio_path = await generator.create_podcast(input_text, language)
+        
+        # Upload to Cloudinary
+        # content_type="audio" ensures it goes to gyanify/audio/ folder
+        cloudinary_url = upload_video_to_cloudinary(
+            file_path=audio_path, 
+            video_id=job_id, 
+            language=language,
+            content_type="audio"
+        )
+        
+        return {
+            "status": "success",
+            "job_id": job_id,
+            "audio_url": cloudinary_url
+        }
+        
+    except Exception as e:
+        logger.error(f"Podcast generation failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": str(e)}
+        )
+
+

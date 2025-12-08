@@ -199,6 +199,8 @@ async def trigger_localization(
             'job_id': video_id,
             'status': 'completed',
             'cloudinary_url': result.get('cloudinary_url'),
+            'subtitle_url': result.get('subtitle_url'),  # 🚀 NEW: Capture Subtitle URL
+            'english_subtitle_url': result.get('english_subtitle_url'),  # 🚀 NEW: Capture English Subtitle URL
             'transcript_original': result.get('transcript_original'),
             'transcript_translated': result.get('transcript_translated'),
             'message': result.get('message', 'Localization complete')

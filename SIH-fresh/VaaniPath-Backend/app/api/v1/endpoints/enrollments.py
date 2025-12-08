@@ -174,43 +174,51 @@ async def get_my_enrollments(
             .order("enrolled_at", desc=True)\
             .execute()
         
+        if not response.data:
+            return EnrollmentList(enrollments=[], total=0)
+        
+        enrollments_data = response.data
+        course_ids = [e.get("course_id") for e in enrollments_data if e.get("course_id")]
+        
+        if not course_ids:
+            return EnrollmentList(enrollments=[], total=0)
+        
+        # 🚀 BATCH FETCH: Get all courses in ONE query
+        courses_response = supabase.table("courses")\
+            .select("id, title, thumbnail_url")\
+            .in_("id", course_ids)\
+            .execute()
+        
+        courses_map = {}
+        for course in (courses_response.data or []):
+            courses_map[course["id"]] = course
+        
+        # 🚀 BATCH FETCH: Get all videos for all courses in ONE query
+        videos_response = supabase.table("videos")\
+            .select("id, course_id")\
+            .in_("course_id", course_ids)\
+            .execute()
+        
+        # Count videos per course
+        videos_count = {}
+        for video in (videos_response.data or []):
+            cid = video["course_id"]
+            videos_count[cid] = videos_count.get(cid, 0) + 1
+        
+        # Build response
         enrollments = []
-        for enrollment in response.data:
+        for enrollment in enrollments_data:
             course_id = enrollment.get("course_id")
             
-            # Skip enrollments with null/missing course_id (data integrity issue)
-            if not course_id:
-                logger.warning(f"Skipping enrollment {enrollment.get('id')} - missing course_id")
+            if not course_id or course_id not in courses_map:
+                logger.warning(f"Skipping enrollment {enrollment.get('id')} - missing/invalid course_id")
                 continue
             
-            # Manually fetch course details
-            course_response = supabase.table("courses")\
-                .select("title, thumbnail_url")\
-                .eq("id", course_id)\
-                .execute()
-            
-            course_data = course_response.data[0] if course_response.data else {}
-            
-            # Get video count for the course
-            videos_response = supabase.table("videos")\
-                .select("id")\
-                .eq("course_id", course_id)\
-                .execute()
-            
-            total_videos = len(videos_response.data) if videos_response.data else 0
+            course_data = courses_map[course_id]
+            total_videos = videos_count.get(course_id, 0)
             
             # Calculate completed videos from progress
-            progress = enrollment.get("progress", {})
-            # Handle progress as either dict or JSON string
-            if isinstance(progress, str):
-                try:
-                    import json
-                    progress = json.loads(progress) if progress else {}
-                except:
-                    progress = {}
-            elif not isinstance(progress, dict):
-                progress = {}
-            
+            progress = safe_parse_progress(enrollment.get("progress", {}))
             completed_videos = sum(1 for v in progress.values() if isinstance(v, dict) and v.get("completed", False))
             progress_percentage = (completed_videos / total_videos * 100) if total_videos > 0 else 0.0
             
@@ -235,8 +243,6 @@ async def get_my_enrollments(
                 ))
             except Exception as e:
                 logger.error(f"Error creating EnrollmentResponse: {e}")
-                logger.error(f"Enrollment keys: {enrollment.keys()}")
-                logger.error(f"Enrollment dict keys: {enrollment_dict.keys()}")
                 raise e
         
         return EnrollmentList(

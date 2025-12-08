@@ -90,6 +90,7 @@ export interface Competition {
   updated_at: string;
   is_registered?: boolean;
   user_score?: number;
+  difficulty: "normal" | "hard";
 }
 
 export interface CompetitionCreate {
@@ -98,6 +99,7 @@ export interface CompetitionCreate {
   description?: string;
   start_time: string;
   end_time: string;
+  difficulty: "normal" | "hard";
   max_participants?: number;
   points_first?: number;
   points_second?: number;

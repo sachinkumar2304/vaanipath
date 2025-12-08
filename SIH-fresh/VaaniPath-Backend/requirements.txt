@@ -20,6 +20,8 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt,argon2]>=1.7.0
 python-dotenv>=1.0.0
 email-validator>=2.0.0
+slowapi>=0.1.9
+bleach>=6.0.0
 
 # ML & AI Dependencies (Optional - comment out if not needed)
 # torch>=2.0.0

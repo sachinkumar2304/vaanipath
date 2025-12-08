@@ -18,6 +18,8 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+from app.core.cache import cached, cache
+
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=CourseResponse)
 async def create_course(
     course: CourseCreate,
@@ -51,6 +53,10 @@ async def create_course(
         
         created_course = response.data[0]
         
+        # Invalidate cache
+        cache.delete_pattern("courses_list*")
+        cache.delete_pattern("teacher_courses*")
+        
         # Get teacher info
         teacher_response = supabase.table("users").select("full_name").eq("id", current_user["id"]).execute()
         teacher_name = teacher_response.data[0]["full_name"] if teacher_response.data else None
@@ -73,6 +79,7 @@ async def create_course(
 
 
 @router.get("", response_model=CourseList)
+@cached(ttl=60, key_prefix="courses_list")
 async def get_all_courses(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -101,24 +108,45 @@ async def get_all_courses(
         offset = (page - 1) * page_size
         response = query.order("created_at", desc=True).range(offset, offset + page_size - 1).execute()
         
-        courses = []
-        for course in response.data:
-            # Get video count and total duration
-            videos_response = supabase.table("videos")\
-                .select("id, duration")\
-                .eq("course_id", course["id"])\
+        if not response.data:
+            return CourseList(courses=[], total=0, page=page, page_size=page_size)
+        
+        courses_data = response.data
+        course_ids = [c["id"] for c in courses_data]
+        teacher_ids = list(set(c.get("teacher_id") for c in courses_data if c.get("teacher_id")))
+        
+        # 🚀 BATCH FETCH: Get all videos for all courses in ONE query
+        videos_response = supabase.table("videos")\
+            .select("id, course_id, duration")\
+            .in_("course_id", course_ids)\
+            .execute()
+        
+        # Group videos by course_id
+        videos_by_course = {}
+        for video in (videos_response.data or []):
+            cid = video["course_id"]
+            if cid not in videos_by_course:
+                videos_by_course[cid] = []
+            videos_by_course[cid].append(video)
+        
+        # 🚀 BATCH FETCH: Get all teachers in ONE query
+        teachers_map = {}
+        if teacher_ids:
+            teachers_response = supabase.table("users")\
+                .select("id, full_name")\
+                .in_("id", teacher_ids)\
                 .execute()
             
-            total_videos = len(videos_response.data) if videos_response.data else 0
-            total_duration = sum(v.get("duration", 0) or 0 for v in videos_response.data) if videos_response.data else 0
-            
-            # Manually fetch teacher name
-            teacher_id = course.get("teacher_id")
-            teacher_name = None
-            if teacher_id:
-                teacher_response = supabase.table("users").select("full_name").eq("id", teacher_id).execute()
-                if teacher_response.data:
-                    teacher_name = teacher_response.data[0].get("full_name")
+            for teacher in (teachers_response.data or []):
+                teachers_map[teacher["id"]] = teacher.get("full_name")
+        
+        # Build response
+        courses = []
+        for course in courses_data:
+            course_videos = videos_by_course.get(course["id"], [])
+            total_videos = len(course_videos)
+            total_duration = sum(v.get("duration", 0) or 0 for v in course_videos)
+            teacher_name = teachers_map.get(course.get("teacher_id"))
             
             courses.append(CourseResponse(
                 **{k: v for k, v in course.items() if k != "users"},
@@ -161,19 +189,33 @@ async def get_my_courses(
         offset = (page - 1) * page_size
         response = query.order("created_at", desc=True).range(offset, offset + page_size - 1).execute()
         
+        if not response.data:
+            return CourseList(courses=[], total=0, page=page, page_size=page_size)
+        
+        courses_data = response.data
+        course_ids = [c["id"] for c in courses_data]
+        
+        # 🚀 BATCH FETCH: Get all videos for all courses in ONE query
+        videos_response = supabase.table("videos")\
+            .select("id, course_id, duration")\
+            .in_("course_id", course_ids)\
+            .execute()
+        
+        # Group videos by course_id
+        videos_by_course = {}
+        for video in (videos_response.data or []):
+            cid = video["course_id"]
+            if cid not in videos_by_course:
+                videos_by_course[cid] = []
+            videos_by_course[cid].append(video)
+        
+        # Build response
+        teacher_name = current_user.get("full_name") or current_user.get("name")
         courses = []
-        for course in response.data:
-            # Get video count and total duration
-            videos_response = supabase.table("videos")\
-                .select("id, duration")\
-                .eq("course_id", course["id"])\
-                .execute()
-            
-            total_videos = len(videos_response.data) if videos_response.data else 0
-            total_duration = sum(v.get("duration", 0) or 0 for v in videos_response.data) if videos_response.data else 0
-            
-            # We know the teacher is the current user
-            teacher_name = current_user.get("full_name") or current_user.get("name")
+        for course in courses_data:
+            course_videos = videos_by_course.get(course["id"], [])
+            total_videos = len(course_videos)
+            total_duration = sum(v.get("duration", 0) or 0 for v in course_videos)
             
             courses.append(CourseResponse(
                 **{k: v for k, v in course.items() if k != "users"},
@@ -292,6 +334,31 @@ async def get_course_by_id(
         videos = videos_response.data if videos_response.data else []
         total_videos = len(videos)
         total_duration = sum(v.get("duration", 0) or 0 for v in videos)
+
+        # 🚀 NEW: Batch Fetch Subtitles
+        try:
+            video_ids = [v["id"] for v in videos]
+            if video_ids:
+                subtitles_response = supabase.table("translations")\
+                    .select("video_id, language, subtitle_url")\
+                    .in_("video_id", video_ids)\
+                    .eq("status", "completed")\
+                    .execute()
+                
+                subtitles_map = {}
+                if subtitles_response.data:
+                    for item in subtitles_response.data:
+                        if item.get("subtitle_url"):
+                            vid = item["video_id"]
+                            if vid not in subtitles_map:
+                                subtitles_map[vid] = {}
+                            subtitles_map[vid][item["language"]] = item["subtitle_url"]
+                
+                # Attach to videos
+                for video in videos:
+                    video["subtitles"] = subtitles_map.get(video["id"], {})
+        except Exception as e:
+            logger.warning(f"Failed to fetch subtitles for course videos: {e}")
         
         # Manually fetch teacher name
         teacher_id = course.get("teacher_id")
@@ -364,6 +431,12 @@ async def update_course(
                 )
             
             updated_course = response.data[0]
+            
+            # Invalidate cache
+            cache.delete_pattern("courses_list*")
+            cache.delete_pattern("teacher_courses*")
+            cache.delete(f"course:{course_id}")
+            
         else:
             updated_course = course
         
@@ -429,6 +502,11 @@ async def delete_course(
         
         # Delete course (cascade will delete videos and enrollments)
         supabase.table("courses").delete().eq("id", course_id).execute()
+                
+        # Invalidate cache
+        cache.delete_pattern("courses_list*")
+        cache.delete_pattern("teacher_courses*")
+        cache.delete(f"course:{course_id}")
         
         logger.info(f"✅ Course deleted: {course['title']} (ID: {course_id}) by {'admin' if is_admin else 'teacher'}")
         
@@ -461,7 +539,34 @@ async def get_course_videos(
         if not response.data:
             return []
         
-        videos = [VideoResponse(**video) for video in response.data]
+        videos_data = response.data
+        
+        # 🚀 NEW: Batch Fetch Subtitles
+        try:
+            video_ids = [v["id"] for v in videos_data]
+            if video_ids:
+                subtitles_response = supabase.table("translations")\
+                    .select("video_id, language, subtitle_url")\
+                    .in_("video_id", video_ids)\
+                    .eq("status", "completed")\
+                    .execute()
+                
+                subtitles_map = {}
+                if subtitles_response.data:
+                    for item in subtitles_response.data:
+                        if item.get("subtitle_url"):
+                            vid = item["video_id"]
+                            if vid not in subtitles_map:
+                                subtitles_map[vid] = {}
+                            subtitles_map[vid][item["language"]] = item["subtitle_url"]
+                
+                # Attach to videos
+                for video in videos_data:
+                    video["subtitles"] = subtitles_map.get(video["id"], {})
+        except Exception as e:
+            logger.warning(f"Failed to fetch subtitles for course videos: {e}")
+
+        videos = [VideoResponse(**video) for video in videos_data]
         return videos
         
     except Exception as e:

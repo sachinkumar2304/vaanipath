@@ -283,19 +283,19 @@ async def get_review_stats(
         
         # Count pending reviews
         pending_response = supabase.table("translations")\
-            .select("*")\
+            .select("id", count="exact", head=True)\
             .eq("status", "review_pending")\
             .execute()
         
         # Count approved reviews
         approved_response = supabase.table("reviews")\
-            .select("*")\
+            .select("id", count="exact", head=True)\
             .eq("approved", True)\
             .execute()
         
         # Count rejected reviews
         rejected_response = supabase.table("reviews")\
-            .select("*")\
+            .select("id", count="exact", head=True)\
             .eq("approved", False)\
             .execute()
         
@@ -303,9 +303,9 @@ async def get_review_stats(
         avg_time = 2.5  # TODO: Calculate from actual data
         
         return {
-            "total_pending": len(pending_response.data) if pending_response.data else 0,
-            "total_approved": len(approved_response.data) if approved_response.data else 0,
-            "total_rejected": len(rejected_response.data) if rejected_response.data else 0,
+            "total_pending": pending_response.count if pending_response.count is not None else 0,
+            "total_approved": approved_response.count if approved_response.count is not None else 0,
+            "total_rejected": rejected_response.count if rejected_response.count is not None else 0,
             "avg_review_time_hours": avg_time
         }
     

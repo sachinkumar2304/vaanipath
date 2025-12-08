@@ -13,10 +13,11 @@ interface CompetitionListProps {
     communityId: string;
 }
 
+import { useAuth } from '@/contexts/AuthContext';
+
 export const CompetitionList = ({ communityId }: CompetitionListProps) => {
     const navigate = useNavigate();
-    const userType = localStorage.getItem('userType'); // Simple check, or use AuthContext
-    const isTeacher = userType === 'teacher' || userType === 'tutor';
+    const { isTeacher } = useAuth();
     
     const [competitions, setCompetitions] = useState<Competition[]>([]);
     const [isLoading, setIsLoading] = useState(true);

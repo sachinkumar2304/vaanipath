@@ -168,7 +168,19 @@ const StudentDashboard = () => {
           {isLoading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-[300px] rounded-xl bg-muted/20 animate-pulse" />
+                <Card key={i} className="h-full flex flex-col overflow-hidden">
+                  <div className="aspect-video bg-muted/50 animate-pulse" />
+                  <CardContent className="p-4 space-y-3">
+                    <div className="h-6 bg-muted/50 rounded animate-pulse" />
+                    <div className="h-4 bg-muted/50 rounded w-3/4 animate-pulse" />
+                    <div className="h-4 bg-muted/50 rounded w-1/2 animate-pulse" />
+                    <div className="flex justify-between mt-4">
+                      <div className="h-4 bg-muted/50 rounded w-12 animate-pulse" />
+                      <div className="h-4 bg-muted/50 rounded w-16 animate-pulse" />
+                    </div>
+                    <div className="h-10 bg-muted/50 rounded animate-pulse mt-4" />
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : (

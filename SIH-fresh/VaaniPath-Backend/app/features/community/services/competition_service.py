@@ -227,12 +227,104 @@ class CompetitionService:
                 user_res = main_db.table("users").select("gyan_points").eq("id", str(winner_id)).execute()
                 
                 if user_res.data:
-                    current_points = user_res.data[0].get("gyan_points", 0) or 0
-                    points_to_award = 100 # Fixed as per user req, or comp["points_first"]
-                    new_points = current_points + points_to_award
+                    # current_points = user_res.data[0].get("gyan_points", 0) or 0
+                    points_to_award = comp.get("points_first", 100)
+                    # new_points = current_points + points_to_award
                     
-                    # Update
-                    main_db.table("users").update({"gyan_points": new_points}).eq("id", str(winner_id)).execute()
+                    # Update via Service
+                    from app.features.community.services.gyan_points_service import GyanPointsService
+                    await GyanPointsService.add_points(
+                        user_id=winner_id,
+                        points=points_to_award,
+                        source="competition_win",
+                        description=f"Winner of {comp.get('title', 'Competition')}",
+                        reference_id=competition_id
+                    )
+                    
+                    # --- Streak Logic ---
+                    try:
+                        # Calculate streak: Count how many *most recent* completed competitions in this community were won by this user
+                        # 1. Get past completed competitions for this community, ordered recent first
+                        past_comps = community_db.table("competitions").select("id").eq("community_id", comp["community_id"]).eq("status", "completed").neq("id", str(competition_id)).order("end_time", desc=True).limit(20).execute()
+                        
+                        streak_count = 0
+                        if past_comps.data:
+                            # We need to check who won each of these. 
+                            # Optimization: We could store 'winner_id' in competition table to avoid N+1 queries.
+                            # But for now, we have to query leaderboards or submissions? 
+                            # Leaderboard is calculated on fly... checking 'submissions' or 'registrations' is fuzzy.
+                            # Best approach without schema change: 
+                            #  - Actually, we don't have a stored winner. We assume highest score.
+                            # This is expensive to calculate for past competitions on the fly.
+                            # ALTERNATIVE: Just check if we can query 'gyan_points_transactions' for 'competition_win' source for this user?
+                            #  But that doesn't guarantee *consecutive* wins in *this* community (could be others).
+                            
+                            # Let's rely on gyan_points_transactions with generic description logic used above? 
+                            # "Winner of {title}" - weak link.
+                            
+                            # Decision: For robust streak, we REALLY should update the competition model to store 'winner_id' when finalized.
+                            # Since I can't easily change schema right now without migrations, I will use a heuristic:
+                            # Check `gyan_points_transactions` for this user, looking for 'competition_win'.
+                            # If the *last* transaction (before this one) was also a competition win AND time difference is reasonable, count it?
+                            # No, that spans communities.
+                            
+                            # Correct "No Schema Change" approach:
+                            # We simply won't back-calculate too deep.
+                            # Wait, we can assume if the user won, they got points.
+                            pass
+
+                        # Since deep streak calculation is hard without 'winner_id' column, 
+                        # I will add a simple 'current_winning_streak' to the USER's gyan_points profile? 
+                        # No, simpler: Just give a random "Persistence Bonus" if they participated in last 3?
+                        # User specifically asked for "coming 1st in contest in a row".
+                        
+                        # Let's do a simplified check:
+                        # Get last 5 completed competitions for this community.
+                        # For each, get the leaderboard (expensive but accurate).
+                        # If winner == current_user, streak++. Else break.
+                        
+                        streak_bonus = 0
+                        consecutive_wins = 0
+                        
+                        for past_comp in past_comps.data:
+                            # Quick fetch top leaderboard entry
+                            # This is simulating `get_leaderboard` logic but lighter
+                            subs = community_db.table("competition_submissions").select("user_id, points_earned").eq("competition_id", past_comp["id"]).execute()
+                            
+                            if not subs.data: continue # No submissions
+                            
+                            # Aggregate
+                            u_scores = {}
+                            for s in subs.data:
+                                uid = s['user_id']
+                                u_scores[uid] = u_scores.get(uid, 0) + s['points_earned']
+                            
+                            # Find winner
+                            if not u_scores: continue
+                            past_winner_id = max(u_scores, key=u_scores.get)
+                            
+                            if past_winner_id == str(winner_id):
+                                consecutive_wins += 1
+                            else:
+                                break # Streak broken
+                        
+                        if consecutive_wins > 0:
+                            streak_bonus = consecutive_wins * 20 # 20 points per streak level
+                            await GyanPointsService.add_points(
+                                user_id=winner_id,
+                                points=streak_bonus,
+                                source="streak_bonus",
+                                description=f"Ignited Streak! {consecutive_wins+1} wins in a row!",
+                                reference_id=competition_id
+                            )
+                            logger.info(f"🔥 Streak Bonus: {streak_bonus} pts for {consecutive_wins} consecutive wins")
+
+                    except Exception as e:
+                        logger.error(f"Failed to calc streak: {e}")
+                    # --------------------
+
+                    # main_db.table("users").update({"gyan_points": new_points}).eq("id", str(winner_id)).execute()
+                    
                     logger.info(f"🏆 Awarded {points_to_award} GyanPoints to winner {winner_id}")
             
             # Mark as completed

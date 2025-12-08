@@ -59,6 +59,7 @@ def upload_video_to_cloudinary(
         logger.info(f"📤 Uploading {file_path} to Cloudinary...")
         
         # Determine folder based on content type
+        resource_type = 'video'
         if content_type == 'original':
             # Original videos: gyanify/original/{video_id}
             folder = "gyanify/original"
@@ -69,6 +70,12 @@ def upload_video_to_cloudinary(
             folder = "gyanify/audio"
             public_id = f"gyanify/audio/{video_id}_{language}"
             tags = ["gyanify", "audio", language]
+        elif content_type == 'subtitle':
+            # Subtitle files: gyanify/subtitles/{video_id}_{language}
+            folder = "gyanify/subtitles"
+            public_id = f"gyanify/subtitles/{video_id}_{language}"
+            tags = ["gyanify", "subtitle", language]
+            resource_type = 'raw'
         else:  # dubbed video
             # Dubbed videos: gyanify/dubbed/{video_id}_{language}
             folder = "gyanify/dubbed"
@@ -78,7 +85,7 @@ def upload_video_to_cloudinary(
         # Upload to Cloudinary
         result = cloudinary.uploader.upload(
             file_path,
-            resource_type='video',  # Works for both video and audio
+            resource_type=resource_type,  # Works for both video and audio
             public_id=public_id,
             folder=folder,
             overwrite=True,

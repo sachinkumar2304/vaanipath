@@ -2,6 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.v1.router import api_router
+from app.core.security_middleware import (
+    limiter,
+    security_headers_middleware,
+    request_logging_middleware,
+    rate_limit_exceeded_handler
+)
+from slowapi.errors import RateLimitExceeded
 import logging
 
 # Configure logging
@@ -24,7 +31,17 @@ app = FastAPI(
     description="AI-Powered Multilingual Content Localization Engine for Skill Courses"
 )
 
-# CORS Middleware
+# Add rate limiter state
+app.state.limiter = limiter
+
+# Add rate limit exceeded handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Security Middleware (MUST be first)
+app.middleware("http")(security_headers_middleware)
+app.middleware("http")(request_logging_middleware)
+
+# CORS Middleware (Production: restrict to specific domains)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -36,15 +53,26 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000"
+        # TODO: In production, replace with:
+        # "https://vaanipath.com",
+        # "https://www.vaanipath.com"
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
+
+# Include Community Feature Routes
+from app.features.community.routes import communities, competitions, gyan_points, posts
+
+app.include_router(communities.router, prefix="/api/v1/communities", tags=["communities"])
+app.include_router(competitions.router, prefix="/api/v1/competitions", tags=["competitions"])
+app.include_router(gyan_points.router, prefix="/api/v1/gyan-points", tags=["gyan-points"])
+app.include_router(posts.router, prefix="/api/v1/posts", tags=["posts"])
 
 
 @app.get("/")

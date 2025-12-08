@@ -319,6 +319,24 @@ async def get_video(
         except Exception as e:
             logger.warning(f"Failed to increment views for video {video_id}: {e}")
             
+        # 🚀 NEW: Fetch Subtitles
+        try:
+            subtitles_response = supabase.table("translations")\
+                .select("language, subtitle_url")\
+                .eq("video_id", video_id)\
+                .eq("status", "completed")\
+                .execute()
+                
+            subtitles = {}
+            if subtitles_response.data:
+                for item in subtitles_response.data:
+                    if item.get("subtitle_url"):
+                        subtitles[item["language"]] = item["subtitle_url"]
+            
+            video["subtitles"] = subtitles
+        except Exception as e:
+            logger.warning(f"Failed to fetch subtitles for video {video_id}: {e}")
+            
         return video
     except HTTPException:
         raise

@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PremiumBackground } from '@/components/ui/PremiumBackground';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 const TeacherDashboard = () => {
   const { t } = useTranslation();
@@ -22,44 +23,29 @@ const TeacherDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalVideos: 0,
-    totalStudents: 0,
-    totalViews: 0
+  const { data: coursesData, isLoading: isCoursesLoading } = useQuery({
+    queryKey: ['teacher-courses'],
+    queryFn: () => getMyCourses(),
+    enabled: !!isTeacher,
+    staleTime: 1000 * 60 * 5,
   });
+
+  const { data: statsData, isLoading: isStatsLoading } = useQuery({
+    queryKey: ['teacher-stats'],
+    queryFn: getTeacherStats,
+    enabled: !!isTeacher,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const courses = coursesData?.courses || [];
+  const stats = statsData || { totalVideos: 0, totalStudents: 0, totalViews: 0 };
+  const isLoading = isCoursesLoading || isStatsLoading;
 
   useEffect(() => {
     if (!isTeacher) {
       navigate('/teacherlogin');
-      return;
     }
-    loadData();
   }, [isTeacher, navigate]);
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-
-      const [coursesResponse, statsResponse] = await Promise.all([
-        getMyCourses(),
-        getTeacherStats()
-      ]);
-
-      setCourses(coursesResponse.courses);
-      setStats(statsResponse);
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load dashboard data',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const quickActions = [
     {
@@ -233,7 +219,23 @@ const TeacherDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">{t('browseCourses.loading')}</div>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-4 rounded-xl border border-muted">
+                      <div className="flex items-start gap-4">
+                        <div className="w-24 h-16 rounded-lg bg-muted/50 animate-pulse flex-shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-5 bg-muted/50 rounded animate-pulse w-3/4" />
+                          <div className="h-4 bg-muted/50 rounded animate-pulse w-1/2" />
+                          <div className="flex gap-4 mt-2">
+                            <div className="h-4 bg-muted/50 rounded animate-pulse w-16" />
+                            <div className="h-4 bg-muted/50 rounded animate-pulse w-20" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : courses.length > 0 ? (
                 courses.slice(0, 3).map((course) => (
                   <div

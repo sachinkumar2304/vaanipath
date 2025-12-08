@@ -18,20 +18,11 @@ def get_community_db() -> Client:
     
     if _community_supabase is None:
         settings = get_community_settings()
-        
-        # Use community-specific credentials if available, otherwise fall back to main
-        supabase_url = settings.COMMUNITY_SUPABASE_URL or settings.SUPABASE_URL
-        supabase_key = settings.COMMUNITY_SUPABASE_KEY or settings.SUPABASE_KEY
-        
-        if not supabase_url or not supabase_key:
-            raise ValueError("Supabase credentials not configured for community features")
-        
-        _community_supabase = create_client(supabase_url, supabase_key)
-        
-        if settings.COMMUNITY_SUPABASE_URL:
-            logger.info("✅ Community Supabase client initialized (dedicated)")
-        else:
-            logger.info("✅ Community Supabase client initialized (using main credentials)")
+        _community_supabase = create_client(
+            settings.COMMUNITY_SUPABASE_URL,
+            settings.COMMUNITY_SUPABASE_KEY
+        )
+        logger.info("✅ Community Supabase client initialized")
     
     return _community_supabase
 
